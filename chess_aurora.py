@@ -6,7 +6,6 @@ from io import BytesIO
 import time
 import random
 import requests
-from transformers import pipeline
 import re
 import os
 
