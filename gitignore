@@ -1,580 +1,373 @@
-import streamlit as st
-import chess
-import chess.svg
-import base64
-from io import BytesIO
-import time
-import random
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Page configuration
-st.set_page_config(
-    page_title="💎 Glass Chess",
-    page_icon="💎",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+# PyInstaller
+*.manifest
+*.spec
 
-# Custom CSS for iOS 26 Glassy theme with blue, gold, and red hues
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&family=SF+Mono:wght@400;500;600&display=swap');
-    
-    .main {
-        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
-        background-size: 400% 400%;
-        animation: glassGradient 12s ease infinite;
-        min-height: 100vh;
-        padding: 0;
-    }
-    
-    @keyframes glassGradient {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-    
-    .stApp {
-        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
-        background-size: 400% 400%;
-        animation: glassGradient 12s ease infinite;
-    }
-    
-    .glass-container {
-        background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(30px);
-        -webkit-backdrop-filter: blur(30px);
-        border-radius: 32px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        padding: 3rem;
-        margin: 2rem auto;
-        max-width: 1400px;
-        box-shadow: 
-            0 8px 32px rgba(0, 0, 0, 0.3),
-            0 0 0 1px rgba(255, 255, 255, 0.05),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .glass-container::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(45deg, transparent 30%, rgba(64, 156, 255, 0.05) 50%, transparent 70%);
-        animation: glassShimmer 4s ease-in-out infinite;
-        pointer-events: none;
-    }
-    
-    @keyframes glassShimmer {
-        0%, 100% { transform: translateX(-100%); }
-        50% { transform: translateX(100%); }
-    }
-    
-    .glass-title {
-        text-align: center;
-        color: #ffffff;
-        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-        font-weight: 700;
-        font-size: 3.5rem;
-        margin-bottom: 0.5rem;
-        text-shadow: 
-            0 0 20px rgba(64, 156, 255, 0.5),
-            0 0 40px rgba(255, 215, 0, 0.3);
-        animation: glassTitle 3s ease-in-out infinite alternate;
-        letter-spacing: -0.02em;
-    }
-    
-    @keyframes glassTitle {
-        0% { 
-            text-shadow: 0 0 20px rgba(64, 156, 255, 0.5), 0 0 40px rgba(255, 215, 0, 0.3);
-            transform: scale(1);
-        }
-        100% { 
-            text-shadow: 0 0 30px rgba(255, 69, 58, 0.6), 0 0 50px rgba(255, 215, 0, 0.4);
-            transform: scale(1.02);
-        }
-    }
-    
-    .glass-subtitle {
-        text-align: center;
-        color: rgba(255, 255, 255, 0.8);
-        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-        font-weight: 400;
-        font-size: 1.2rem;
-        margin-bottom: 2.5rem;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        letter-spacing: 0.01em;
-    }
-    
-    .chess-board-container {
-        display: flex;
-        justify-content: center;
-        margin: 2.5rem 0;
-        position: relative;
-    }
-    
-    .chess-board-container img {
-        border-radius: 24px;
-        box-shadow: 
-            0 20px 60px rgba(0, 0, 0, 0.4),
-            0 0 0 1px rgba(255, 255, 255, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .chess-board-container img:hover {
-        transform: scale(1.02) translateY(-4px);
-        box-shadow: 
-            0 30px 80px rgba(0, 0, 0, 0.5),
-            0 0 0 1px rgba(255, 255, 255, 0.15),
-            inset 0 1px 0 rgba(255, 255, 255, 0.15);
-    }
-    
-    .glass-info {
-        background: rgba(64, 156, 255, 0.08);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 24px;
-        border: 1px solid rgba(64, 156, 255, 0.15);
-        padding: 2rem;
-        margin: 1.5rem 0;
-        color: white;
-        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-        box-shadow: 
-            0 8px 32px rgba(64, 156, 255, 0.1),
-            0 0 0 1px rgba(255, 255, 255, 0.05);
-    }
-    
-    .move-history {
-        background: rgba(255, 215, 0, 0.08);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 24px;
-        border: 1px solid rgba(255, 215, 0, 0.15);
-        padding: 2rem;
-        margin: 1.5rem 0;
-        color: white;
-        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-        max-height: 350px;
-        overflow-y: auto;
-        box-shadow: 
-            0 8px 32px rgba(255, 215, 0, 0.1),
-            0 0 0 1px rgba(255, 255, 255, 0.05);
-    }
-    
-    .glass-button {
-        background: linear-gradient(135deg, rgba(64, 156, 255, 0.9), rgba(255, 69, 58, 0.9));
-        border: none;
-        border-radius: 20px;
-        color: white;
-        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-        font-weight: 600;
-        padding: 1rem 2rem;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 
-            0 8px 24px rgba(64, 156, 255, 0.3),
-            0 0 0 1px rgba(255, 255, 255, 0.1);
-        position: relative;
-        overflow: hidden;
-        letter-spacing: 0.01em;
-    }
-    
-    .glass-button::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .glass-button:hover::before {
-        left: 100%;
-    }
-    
-    .glass-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 
-            0 12px 32px rgba(64, 156, 255, 0.4),
-            0 0 0 1px rgba(255, 255, 255, 0.15);
-        background: linear-gradient(135deg, rgba(255, 69, 58, 0.9), rgba(255, 215, 0, 0.9));
-    }
-    
-    .stButton > button {
-        background: linear-gradient(135deg, rgba(64, 156, 255, 0.9), rgba(255, 69, 58, 0.9)) !important;
-        border: none !important;
-        border-radius: 20px !important;
-        color: white !important;
-        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif !important;
-        font-weight: 600 !important;
-        padding: 1rem 2rem !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        box-shadow: 
-            0 8px 24px rgba(64, 156, 255, 0.3),
-            0 0 0 1px rgba(255, 255, 255, 0.1) !important;
-        letter-spacing: 0.01em !important;
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 
-            0 12px 32px rgba(64, 156, 255, 0.4),
-            0 0 0 1px rgba(255, 255, 255, 0.15) !important;
-        background: linear-gradient(135deg, rgba(255, 69, 58, 0.9), rgba(255, 215, 0, 0.9)) !important;
-    }
-    
-    .glass-input {
-        background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 24px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        padding: 2.5rem;
-        margin: 1.5rem 0;
-        box-shadow: 
-            0 8px 32px rgba(0, 0, 0, 0.2),
-            0 0 0 1px rgba(255, 255, 255, 0.05);
-    }
-    
-    .stTextInput > div > div > input {
-        background: rgba(0, 0, 0, 0.2) !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        border-radius: 16px !important;
-        color: white !important;
-        font-family: 'SF Mono', 'Monaco', 'Menlo', monospace !important;
-        font-weight: 500 !important;
-        padding: 1rem 1.5rem !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    }
-    
-    .stTextInput > div > div > input::placeholder {
-        color: rgba(255, 255, 255, 0.5) !important;
-    }
-    
-    .stTextInput > div > div > input:focus {
-        border-color: rgba(64, 156, 255, 0.8) !important;
-        box-shadow: 
-            0 0 0 4px rgba(64, 156, 255, 0.1),
-            0 0 0 1px rgba(64, 156, 255, 0.8) !important;
-        background: rgba(0, 0, 0, 0.3) !important;
-    }
-    
-    .status-message {
-        text-align: center;
-        padding: 2rem;
-        border-radius: 20px;
-        margin: 1.5rem 0;
-        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-        font-weight: 600;
-        font-size: 1.1rem;
-        animation: statusPulse 3s ease-in-out infinite;
-        letter-spacing: 0.01em;
-    }
-    
-    @keyframes statusPulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.02); }
-    }
-    
-    .status-check {
-        background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 193, 7, 0.15));
-        border: 1px solid rgba(255, 215, 0, 0.3);
-        color: #ffd700;
-        box-shadow: 
-            0 8px 32px rgba(255, 215, 0, 0.2),
-            0 0 0 1px rgba(255, 255, 255, 0.05);
-    }
-    
-    .status-checkmate {
-        background: linear-gradient(135deg, rgba(255, 69, 58, 0.15), rgba(220, 53, 69, 0.15));
-        border: 1px solid rgba(255, 69, 58, 0.3);
-        color: #ff6b6b;
-        box-shadow: 
-            0 8px 32px rgba(255, 69, 58, 0.2),
-            0 0 0 1px rgba(255, 255, 255, 0.05);
-    }
-    
-    .status-stalemate {
-        background: linear-gradient(135deg, rgba(108, 117, 125, 0.15), rgba(169, 169, 169, 0.15));
-        border: 1px solid rgba(108, 117, 125, 0.3);
-        color: #b0b0b0;
-        box-shadow: 
-            0 8px 32px rgba(108, 117, 125, 0.2),
-            0 0 0 1px rgba(255, 255, 255, 0.05);
-    }
-    
-    .drag-instructions {
-        background: rgba(255, 215, 0, 0.08);
-        border: 1px solid rgba(255, 215, 0, 0.15);
-        border-radius: 20px;
-        padding: 1.5rem;
-        margin: 1.5rem 0;
-        color: #ffd700;
-        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-        font-weight: 500;
-        text-align: center;
-        box-shadow: 
-            0 8px 32px rgba(255, 215, 0, 0.1),
-            0 0 0 1px rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-    }
-    
-    .piece-selector {
-        display: flex;
-        justify-content: center;
-        gap: 1rem;
-        margin: 1.5rem 0;
-        flex-wrap: wrap;
-    }
-    
-    .piece-option {
-        background: rgba(64, 156, 255, 0.1);
-        border: 1px solid rgba(64, 156, 255, 0.2);
-        border-radius: 16px;
-        padding: 0.75rem 1.5rem;
-        color: white;
-        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-    }
-    
-    .piece-option:hover {
-        background: rgba(64, 156, 255, 0.2);
-        transform: translateY(-2px);
-        box-shadow: 
-            0 8px 24px rgba(64, 156, 255, 0.2),
-            0 0 0 1px rgba(255, 255, 255, 0.1);
-    }
-    
-    .piece-option.selected {
-        background: rgba(255, 215, 0, 0.2);
-        border-color: rgba(255, 215, 0, 0.4);
-        box-shadow: 
-            0 8px 24px rgba(255, 215, 0, 0.2),
-            0 0 0 1px rgba(255, 215, 0, 0.4);
-    }
-    
-    /* Custom scrollbar for move history */
-    .move-history::-webkit-scrollbar {
-        width: 8px;
-    }
-    
-    .move-history::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 4px;
-    }
-    
-    .move-history::-webkit-scrollbar-thumb {
-        background: rgba(255, 215, 0, 0.3);
-        border-radius: 4px;
-    }
-    
-    .move-history::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 215, 0, 0.5);
-    }
-</style>
-""", unsafe_allow_html=True)
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
 
-def init_chess_game():
-    """Initialize a new chess game"""
-    if 'board' not in st.session_state:
-        st.session_state.board = chess.Board()
-    if 'move_history' not in st.session_state:
-        st.session_state.move_history = []
-    if 'game_over' not in st.session_state:
-        st.session_state.game_over = False
-    if 'selected_piece' not in st.session_state:
-        st.session_state.selected_piece = None
-    if 'promotion_piece' not in st.session_state:
-        st.session_state.promotion_piece = chess.QUEEN
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
 
-def get_board_svg(board, size=500):
-    """Convert chess board to SVG with glass theme"""
-    # Custom SVG styling for glass theme
-    svg_content = chess.svg.board(
-        board=board, 
-        size=size,
-        style="""
-        .square.light { fill: #f8f9fa; }
-        .square.dark { fill: #6c757d; }
-        .square.light:hover { fill: #e9ecef; }
-        .square.dark:hover { fill: #5a6268; }
-        .square.selected { fill: #409cff; }
-        .square.move { fill: #28a745; }
-        .square.check { fill: #ff453a; }
-        """
-    )
-    return svg_content
+# Translations
+*.mo
+*.pot
 
-def display_board(board):
-    """Display the chess board with glass effects"""
-    svg_content = get_board_svg(board)
-    
-    # Convert SVG to base64 for display
-    b64 = base64.b64encode(svg_content.encode('utf-8')).decode()
-    
-    st.markdown(f"""
-    <div class="chess-board-container">
-        <img src="data:image/svg+xml;base64,{b64}" alt="Glass Chess Board" style="max-width: 100%; height: auto;">
-    </div>
-    """, unsafe_allow_html=True)
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
 
-def make_move(move_uci):
-    """Make a move on the board"""
-    try:
-        move = chess.Move.from_uci(move_uci)
-        if move in st.session_state.board.legal_moves:
-            st.session_state.board.push(move)
-            st.session_state.move_history.append(move_uci)
-            return True
-        else:
-            st.error("💎 Invalid move! Try again!")
-            return False
-    except ValueError:
-        st.error("💎 Invalid move format! Use UCI notation (e.g., 'e2e4', 'g1f3')")
-        return False
+# Flask stuff:
+instance/
+.webassets-cache
 
-def get_game_status(board):
-    """Get the current game status"""
-    if board.is_checkmate():
-        return "checkmate", "💎 CHECKMATE! The game is over! 💎"
-    elif board.is_stalemate():
-        return "stalemate", "⚖️ STALEMATE! The game is a draw! ⚖️"
-    elif board.is_insufficient_material():
-        return "stalemate", "⚖️ Insufficient material! Draw! ⚖️"
-    elif board.is_check():
-        return "check", "⚡ CHECK! Your king is in danger! ⚡"
-    else:
-        return "normal", "💎 Game in progress 💎"
+# Scrapy stuff:
+.scrapy
 
-def get_best_moves(board, num_moves=3):
-    """Get some suggested moves (simplified)"""
-    legal_moves = list(board.legal_moves)
-    if len(legal_moves) > 0:
-        return random.sample(legal_moves, min(num_moves, len(legal_moves)))
-    return []
+# Sphinx documentation
+docs/_build/
 
-def main():
-    # Initialize the game
-    init_chess_game()
-    
-    # Main container
-    st.markdown('<div class="glass-container">', unsafe_allow_html=True)
-    
-    # Title
-    st.markdown('<h1 class="glass-title">💎 GLASS CHESS 💎</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="glass-subtitle">Where elegance meets strategy in a crystal-clear interface</p>', unsafe_allow_html=True)
-    
-    # Display the board
-    display_board(st.session_state.board)
-    
-    # Game status
-    status, message = get_game_status(st.session_state.board)
-    if status != "normal":
-        status_class = f"status-{status}"
-        st.markdown(f'<div class="status-message {status_class}">{message}</div>', unsafe_allow_html=True)
-    
-    # Drag instructions
-    st.markdown("""
-    <div class="drag-instructions">
-        🎯 <strong>How to Play:</strong> Enter moves in UCI notation (e.g., 'e2e4', 'g1f3', 'e7e5')
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Game controls
-    col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
-    
-    with col1:
-        if st.button("💎 NEW GAME", key="new_game"):
-            st.session_state.board = chess.Board()
-            st.session_state.move_history = []
-            st.session_state.game_over = False
-            st.rerun()
-    
-    with col2:
-        if st.button("↩️ UNDO", key="undo_move"):
-            if len(st.session_state.move_history) > 0:
-                st.session_state.board.pop()
-                st.session_state.move_history.pop()
-                st.rerun()
-    
-    with col3:
-        if st.button("🎲 RANDOM", key="random_move"):
-            legal_moves = list(st.session_state.board.legal_moves)
-            if legal_moves:
-                random_move = str(legal_moves[0])
-                if make_move(random_move):
-                    st.rerun()
-    
-    with col4:
-        if st.button("📋 FEN", key="copy_fen"):
-            st.code(st.session_state.board.fen())
-    
-    # Move input with glass styling
-    st.markdown('<div class="glass-input">', unsafe_allow_html=True)
-    st.markdown("### 💎 Make Your Move")
-    
-    move_input = st.text_input("Enter move (UCI):", key="move_input", placeholder="e2e4")
-    
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        if st.button("♟️ MAKE MOVE", key="make_move"):
-            if move_input:
-                if make_move(move_input):
-                    st.rerun()
-    
-    with col2:
-        if st.button("🤖 AI MOVE", key="ai_move"):
-            legal_moves = list(st.session_state.board.legal_moves)
-            if legal_moves:
-                # Simple AI: pick a random move
-                ai_move = str(random.choice(legal_moves))
-                if make_move(ai_move):
-                    st.rerun()
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Game information with glass theme
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown('<div class="glass-info">', unsafe_allow_html=True)
-        st.markdown("### 💎 Game Info")
-        st.markdown(f"**Turn:** {'⚪ White' if st.session_state.board.turn else '⚫ Black'}")
-        st.markdown(f"**Moves Made:** {len(st.session_state.move_history)}")
-        st.markdown(f"**Legal Moves:** {st.session_state.board.legal_moves.count()}")
-        
-        # Show some suggested moves
-        best_moves = get_best_moves(st.session_state.board)
-        if best_moves:
-            st.markdown("**💎 Suggested Moves:**")
-            for i, move in enumerate(best_moves, 1):
-                st.markdown(f"  {i}. `{move}`")
-        
-        st.markdown(f"**FEN:** `{st.session_state.board.fen()}`")
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown('<div class="move-history">', unsafe_allow_html=True)
-        st.markdown("### 📜 Move History")
-        if st.session_state.move_history:
-            for i, move in enumerate(st.session_state.move_history, 1):
-                st.markdown(f"**{i}.** `{move}`")
-        else:
-            st.markdown("No moves made yet. Start the game! 💎")
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Close main container
-    st.markdown('</div>', unsafe_allow_html=True)
+# PyBuilder
+.pybuilder/
+target/
 
-if __name__ == "__main__":
-    main() 
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# Streamlit
+.streamlit/
+
+# Chess app specific files
+# Multiplayer game state files
+game_*.json
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+*.lnk
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+node_modules/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env.test
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Chess app data files
+chess_data/
+saved_games/
+*.pgn
+*.fen
+
+# AI model files (if using external models)
+models/
+*.bin
+*.model
+
+# Configuration files with sensitive data
+config.ini
+secrets.json
+credentials.json
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+
+# Media files (if any)
+*.mp4
+*.avi
+*.mov
+*.wav
+*.mp3
+
+# Large data files
+*.csv
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+
+# Cache directories
+.cache/
+__pycache__/
+*.pyc
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath
+*.sage.py
+
+# Spyder
+.spyderproject
+.spyproject
+
+# Rope
+.ropeproject
+
+# mkdocs
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
+
+# pytype
+.pytype/
+
+# Cython
+cython_debug/
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# Streamlit
+.streamlit/
+
+# Chess app specific
+game_*.json
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+*.log
+logs/
+chess_data/
+saved_games/
+*.pgn
+*.fen
+models/
+*.bin
+*.model
+config.ini
+secrets.json
+credentials.json
+*.db
+*.sqlite
+*.sqlite3
+*.bak
+*.backup
+*.zip
+*.tar.gz
+*.rar
