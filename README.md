@@ -1,22 +1,23 @@
-# ♟️ Chess Obsidian
+# 🔥 Fire Chess
 
-A modern chess application with Obsidian-like glassmorphism design, built with React and Next.js.
+A **BLAZING** chess application with fire-themed glassmorphism design, built with Python and Streamlit. Where every move burns with intensity! 🔥
 
 ## ✨ Features
 
-- **Beautiful Glassmorphism UI** - Inspired by Obsidian's design language
-- **Interactive Chess Board** - Powered by react-chessboard
-- **Game Analysis** - Simple move evaluation and best move suggestions
-- **Move History** - Complete game replay functionality
-- **Local Storage** - Save and load games automatically
-- **Responsive Design** - Works on desktop and mobile
-- **Dark Theme** - Easy on the eyes
+- **🔥 FIRE THEME** - Animated fire gradients and blazing effects
+- **�� Glassmorphism UI** - Translucent, blurred backgrounds with fire accents
+- **♟️ Interactive Chess Board** - Powered by python-chess with custom fire styling
+- **⚡ Game Analysis** - Move suggestions and position evaluation
+- **📜 Move History** - Complete game replay with fire-themed styling
+- **🤖 AI Opponent** - Simple AI that makes random moves
+- **📱 Responsive Design** - Works on desktop and mobile
+- **🌙 Dark Theme** - Easy on the eyes for long gaming sessions
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+ 
-- npm or yarn
+- Python 3.8+
+- pip
 
 ### Installation
 
@@ -26,37 +27,37 @@ git clone https://github.com/yourusername/chess-obsidian.git
 cd chess-obsidian
 
 # Install dependencies
-npm install
+pip install -r requirements.txt
 
-# Run the development server
-npm run dev
+# Run the application
+streamlit run chess_obsidian.py
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the application.
+Open [http://localhost:8501](http://localhost:8501) to view the application.
 
 ## �� How to Play
 
-1. **Make Moves** - Click and drag pieces on the board
+1. **Make Moves** - Enter moves in UCI notation (e.g., 'e2e4', 'g1f3', 'e7e5')
 2. **Game Controls**:
-   - 🔄 **New Game** - Start a fresh game
-   - ↩️ **Undo** - Take back the last move
-   - 🎲 **Random Move** - Let the computer make a random move
-   - 📋 **Copy FEN** - Copy the current position
-   - 💾 **Save Game** - Save the current game state
+   - 🔥 **NEW GAME** - Start a fresh game
+   - ↩️ **UNDO** - Take back the last move
+   - 🎲 **RANDOM** - Let the computer make a random move
+   - 🤖 **AI MOVE** - AI opponent makes a move
+   - �� **FEN** - Copy the current position
 
 3. **Analysis Features**:
-   - View move history
-   - See position evaluation
-   - Get best move suggestions
+   - View move history with fire styling
+   - See suggested moves
+   - Get position evaluation
    - Analyze game statistics
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React 18, Next.js 14
-- **Chess Engine**: chess.js
-- **UI Components**: react-chessboard
-- **Styling**: Tailwind CSS
-- **Icons**: Lucide React
-- **State Management**: React Hooks
+- **Backend**: Python 3.8+
+- **Web Framework**: Streamlit
+- **Chess Engine**: python-chess
+- **Styling**: Custom CSS with fire animations and glassmorphism
+- **Fonts**: Orbitron (futuristic) + Inter (clean)
+- **Icons**: Unicode chess symbols and fire emojis
 
 ## 📁 Project Structure
