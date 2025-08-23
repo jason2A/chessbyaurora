@@ -23,6 +23,11 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&family=SF+Mono:wght@400;500;600&display=swap');
     
+    /* Global animations */
+    * {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
     .main {
         background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
         background-size: 400% 400%;
@@ -58,6 +63,12 @@ st.markdown("""
             inset 0 1px 0 rgba(255, 255, 255, 0.1);
         position: relative;
         overflow: hidden;
+        animation: containerFloat 6s ease-in-out infinite;
+    }
+    
+    @keyframes containerFloat {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-8px); }
     }
     
     .glass-container::before {
@@ -87,18 +98,36 @@ st.markdown("""
         text-shadow: 
             0 0 20px rgba(64, 156, 255, 0.5),
             0 0 40px rgba(255, 215, 0, 0.3);
-        animation: glassTitle 3s ease-in-out infinite alternate;
+        animation: glassTitle 4s ease-in-out infinite alternate;
         letter-spacing: -0.02em;
+        position: relative;
+    }
+    
+    .glass-title::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #409cff, #ffd700, #ff453a);
+        animation: titleUnderline 3s ease-in-out infinite;
+    }
+    
+    @keyframes titleUnderline {
+        0%, 100% { width: 0; opacity: 0; }
+        50% { width: 200px; opacity: 1; }
     }
     
     @keyframes glassTitle {
         0% { 
             text-shadow: 0 0 20px rgba(64, 156, 255, 0.5), 0 0 40px rgba(255, 215, 0, 0.3);
-            transform: scale(1);
+            transform: scale(1) rotateY(0deg);
         }
         100% { 
             text-shadow: 0 0 30px rgba(255, 69, 58, 0.6), 0 0 50px rgba(255, 215, 0, 0.4);
-            transform: scale(1.02);
+            transform: scale(1.02) rotateY(2deg);
         }
     }
     
@@ -111,6 +140,12 @@ st.markdown("""
         margin-bottom: 2.5rem;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         letter-spacing: 0.01em;
+        animation: subtitleGlow 5s ease-in-out infinite;
+    }
+    
+    @keyframes subtitleGlow {
+        0%, 100% { opacity: 0.8; transform: translateY(0); }
+        50% { opacity: 1; transform: translateY(-2px); }
     }
     
     .chess-board-container {
@@ -118,6 +153,12 @@ st.markdown("""
         justify-content: center;
         margin: 2.5rem 0;
         position: relative;
+        animation: boardContainerPulse 8s ease-in-out infinite;
+    }
+    
+    @keyframes boardContainerPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.01); }
     }
     
     .chess-board-container img {
@@ -127,14 +168,32 @@ st.markdown("""
             0 0 0 1px rgba(255, 255, 255, 0.1),
             inset 0 1px 0 rgba(255, 255, 255, 0.1);
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: boardGlow 6s ease-in-out infinite;
+    }
+    
+    @keyframes boardGlow {
+        0%, 100% { 
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        50% { 
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 0 30px rgba(64, 156, 255, 0.2);
+        }
     }
     
     .chess-board-container img:hover {
-        transform: scale(1.02) translateY(-4px);
+        transform: scale(1.02) translateY(-4px) rotateY(2deg);
         box-shadow: 
             0 30px 80px rgba(0, 0, 0, 0.5),
             0 0 0 1px rgba(255, 255, 255, 0.15),
-            inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            inset 0 1px 0 rgba(255, 255, 255, 0.15),
+            0 0 40px rgba(255, 215, 0, 0.3);
     }
     
     .glass-info {
@@ -150,6 +209,30 @@ st.markdown("""
         box-shadow: 
             0 8px 32px rgba(64, 156, 255, 0.1),
             0 0 0 1px rgba(255, 255, 255, 0.05);
+        animation: infoPanelFloat 7s ease-in-out infinite;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .glass-info::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(64, 156, 255, 0.1), transparent);
+        animation: infoShimmer 5s ease-in-out infinite;
+    }
+    
+    @keyframes infoPanelFloat {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-3px); }
+    }
+    
+    @keyframes infoShimmer {
+        0%, 100% { left: -100%; }
+        50% { left: 100%; }
     }
     
     .move-history {
