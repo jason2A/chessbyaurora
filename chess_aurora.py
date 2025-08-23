@@ -291,6 +291,8 @@ st.markdown("""
         overflow: hidden;
         letter-spacing: 0.01em;
         animation: buttonPulse 4s ease-in-out infinite;
+        cursor: pointer;
+        user-select: none;
     }
     
     .glass-button::before {
@@ -304,28 +306,112 @@ st.markdown("""
         transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
+    .glass-button::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: all 0.3s ease;
+    }
+    
     .glass-button:hover::before {
         left: 100%;
     }
     
+    .glass-button:hover::after {
+        width: 300px;
+        height: 300px;
+    }
+    
     .glass-button:hover {
-        transform: translateY(-2px) scale(1.05);
+        transform: translateY(-3px) scale(1.08);
         box-shadow: 
-            0 12px 32px rgba(64, 156, 255, 0.4),
-            0 0 0 1px rgba(255, 255, 255, 0.15);
+            0 15px 40px rgba(64, 156, 255, 0.5),
+            0 0 0 1px rgba(255, 255, 255, 0.2),
+            0 0 30px rgba(255, 215, 0, 0.3);
         background: linear-gradient(135deg, rgba(255, 69, 58, 0.9), rgba(255, 215, 0, 0.9));
-        animation: buttonHover 0.3s ease-in-out;
+        animation: buttonHover 0.4s ease-in-out;
+    }
+    
+    .glass-button:active {
+        transform: translateY(-1px) scale(1.05);
+        box-shadow: 
+            0 8px 20px rgba(64, 156, 255, 0.4),
+            0 0 0 1px rgba(255, 255, 255, 0.15);
+        animation: buttonClick 0.2s ease-in-out;
     }
     
     @keyframes buttonPulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.02); }
+        0%, 100% { 
+            transform: scale(1);
+            box-shadow: 0 8px 24px rgba(64, 156, 255, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+        50% { 
+            transform: scale(1.03);
+            box-shadow: 0 12px 32px rgba(64, 156, 255, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.15);
+        }
     }
     
     @keyframes buttonHover {
-        0% { transform: translateY(-2px) scale(1.05); }
-        50% { transform: translateY(-4px) scale(1.08); }
-        100% { transform: translateY(-2px) scale(1.05); }
+        0% { transform: translateY(-3px) scale(1.08); }
+        50% { transform: translateY(-5px) scale(1.12); }
+        100% { transform: translateY(-3px) scale(1.08); }
+    }
+    
+    @keyframes buttonClick {
+        0% { transform: translateY(-3px) scale(1.08); }
+        50% { transform: translateY(0px) scale(0.95); }
+        100% { transform: translateY(-1px) scale(1.05); }
+    }
+    
+    /* Special button styles */
+    .button-new-game {
+        background: linear-gradient(135deg, rgba(255, 215, 0, 0.9), rgba(255, 69, 58, 0.9)) !important;
+        animation: newGamePulse 3s ease-in-out infinite !important;
+    }
+    
+    @keyframes newGamePulse {
+        0%, 100% { 
+            transform: scale(1);
+            box-shadow: 0 8px 24px rgba(255, 215, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+        50% { 
+            transform: scale(1.05);
+            box-shadow: 0 15px 40px rgba(255, 215, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+    }
+    
+    .button-ai-move {
+        background: linear-gradient(135deg, rgba(138, 43, 226, 0.9), rgba(64, 156, 255, 0.9)) !important;
+        animation: aiMoveGlow 2s ease-in-out infinite !important;
+    }
+    
+    @keyframes aiMoveGlow {
+        0%, 100% { 
+            box-shadow: 0 8px 24px rgba(138, 43, 226, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+        50% { 
+            box-shadow: 0 15px 40px rgba(138, 43, 226, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.2), 0 0 30px rgba(138, 43, 226, 0.4);
+        }
+    }
+    
+    .button-multiplayer {
+        background: linear-gradient(135deg, rgba(255, 69, 58, 0.9), rgba(255, 215, 0, 0.9)) !important;
+        animation: multiplayerShimmer 4s ease-in-out infinite !important;
+    }
+    
+    @keyframes multiplayerShimmer {
+        0%, 100% { 
+            background: linear-gradient(135deg, rgba(255, 69, 58, 0.9), rgba(255, 215, 0, 0.9));
+        }
+        50% { 
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.9), rgba(64, 156, 255, 0.9));
+        }
     }
     
     .stButton > button {
@@ -527,36 +613,102 @@ def init_chess_game():
         st.session_state.player_name = None
     if 'waiting_for_opponent' not in st.session_state:
         st.session_state.waiting_for_opponent = False
+    if 'selected_square' not in st.session_state:
+        st.session_state.selected_square = None
+    if 'valid_moves' not in st.session_state:
+        st.session_state.valid_moves = []
+    if 'last_click_time' not in st.session_state:
+        st.session_state.last_click_time = 0
 
-def get_board_svg(board, size=500):
-    """Convert chess board to SVG with glass theme"""
+def get_board_svg(board, size=500, selected_square=None, valid_moves=None):
+    """Convert chess board to SVG with glass theme and interactive squares"""
     # Custom SVG styling for glass theme
-    svg_content = chess.svg.board(
-        board=board, 
-        size=size,
-        style="""
+    style = """
         .square.light { fill: #f8f9fa; }
         .square.dark { fill: #6c757d; }
-        .square.light:hover { fill: #e9ecef; }
-        .square.dark:hover { fill: #5a6268; }
+        .square.light:hover { fill: #e9ecef; cursor: pointer; }
+        .square.dark:hover { fill: #5a6268; cursor: pointer; }
         .square.selected { fill: #409cff; }
         .square.move { fill: #28a745; }
         .square.check { fill: #ff453a; }
+    """
+    
+    # Add selected square highlighting
+    if selected_square is not None:
+        style += f"""
+        .square-{selected_square} {{ fill: #409cff !important; }}
         """
+    
+    # Add valid move highlighting
+    if valid_moves:
+        for move in valid_moves:
+            style += f"""
+            .square-{move.to_square} {{ fill: #28a745 !important; }}
+            """
+    
+    svg_content = chess.svg.board(
+        board=board, 
+        size=size,
+        style=style
     )
     return svg_content
 
 def display_board(board):
-    """Display the chess board with glass effects"""
-    svg_content = get_board_svg(board)
+    """Display the chess board with glass effects and clickable squares"""
+    # Get selected square and valid moves from session state
+    selected_square = st.session_state.get('selected_square', None)
+    valid_moves = st.session_state.get('valid_moves', [])
+    
+    svg_content = get_board_svg(board, selected_square=selected_square, valid_moves=valid_moves)
     
     # Convert SVG to base64 for display
     b64 = base64.b64encode(svg_content.encode('utf-8')).decode()
     
+    # Create clickable board with JavaScript
     st.markdown(f"""
     <div class="chess-board-container">
-        <img src="data:image/svg+xml;base64,{b64}" alt="Glass Chess Board" style="max-width: 100%; height: auto;">
+        <div id="chess-board" style="position: relative; display: inline-block;">
+            <img src="data:image/svg+xml;base64,{b64}" alt="Glass Chess Board" style="max-width: 100%; height: auto; cursor: pointer;" 
+                 onclick="handleBoardClick(event)" id="board-image">
+        </div>
     </div>
+    
+    <script>
+    function handleBoardClick(event) {{
+        const rect = event.target.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        
+        // Calculate square coordinates (8x8 grid)
+        const squareSize = rect.width / 8;
+        const file = Math.floor(x / squareSize);
+        const rank = 7 - Math.floor(y / squareSize); // Flip rank for chess notation
+        
+        // Convert to square index
+        const square = rank * 8 + file;
+        
+        // Send click data to Streamlit
+        const data = {{
+            square: square,
+            file: file,
+            rank: rank
+        }};
+        
+        // Use Streamlit's component bridge to send data
+        if (window.parent && window.parent.postMessage) {{
+            window.parent.postMessage({{
+                type: 'chess-square-click',
+                data: data
+            }}, '*');
+        }}
+        
+        // Also try to trigger a custom event
+        const customEvent = new CustomEvent('chessSquareClick', {{
+            detail: data
+        }});
+        document.dispatchEvent(customEvent);
+    }}
+    </script>
     """, unsafe_allow_html=True)
 
 def make_move(move_uci):
@@ -566,6 +718,10 @@ def make_move(move_uci):
         if move in st.session_state.board.legal_moves:
             st.session_state.board.push(move)
             st.session_state.move_history.append(move_uci)
+            
+            # Clear selection state
+            st.session_state.selected_square = None
+            st.session_state.valid_moves = []
             
             # Save game state for multiplayer
             if st.session_state.game_mode == "multiplayer":
@@ -578,6 +734,54 @@ def make_move(move_uci):
     except ValueError:
         st.error("💎 Invalid move format! Use UCI notation (e.g., 'e2e4', 'g1f3')")
         return False
+
+def handle_square_click(square):
+    """Handle clicking on a chess square"""
+    current_time = time.time()
+    
+    # Check if player can move
+    if not (st.session_state.game_mode == "single" or is_player_turn()):
+        return
+    
+    # If a square is already selected, try to make a move
+    if st.session_state.selected_square is not None:
+        from_square = st.session_state.selected_square
+        to_square = square
+        
+        # Create move
+        move = chess.Move(from_square, to_square)
+        
+        # Check if it's a valid move
+        if move in st.session_state.board.legal_moves:
+            # Check if it's a pawn promotion
+            piece = st.session_state.board.piece_at(from_square)
+            if piece and piece.piece_type == chess.PAWN:
+                # Check if pawn is reaching the last rank
+                if (piece.color and to_square >= 56) or (not piece.color and to_square <= 7):
+                    # Auto-promote to queen for simplicity
+                    move = chess.Move(from_square, to_square, chess.QUEEN)
+            
+            # Make the move
+            if make_move(str(move)):
+                st.rerun()
+        else:
+            # Invalid move, select the new square instead
+            select_square(square)
+    else:
+        # No square selected, select this one
+        select_square(square)
+
+def select_square(square):
+    """Select a square and show valid moves"""
+    piece = st.session_state.board.piece_at(square)
+    
+    # Only allow selecting pieces of the current player's color
+    if piece and piece.color == st.session_state.board.turn:
+        st.session_state.selected_square = square
+        st.session_state.valid_moves = [move for move in st.session_state.board.legal_moves if move.from_square == square]
+    else:
+        st.session_state.selected_square = None
+        st.session_state.valid_moves = []
 
 def get_game_status(board):
     """Get the current game status"""
@@ -897,12 +1101,7 @@ def main():
         
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Drag instructions
-    st.markdown("""
-    <div class="drag-instructions">
-        🎯 <strong>How to Play:</strong> Enter moves in UCI notation (e.g., 'e2e4', 'g1f3', 'e7e5')
-    </div>
-    """, unsafe_allow_html=True)
+
     
     # Game controls
     col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
@@ -912,6 +1111,8 @@ def main():
             st.session_state.board = chess.Board()
             st.session_state.move_history = []
             st.session_state.game_over = False
+            st.session_state.selected_square = None
+            st.session_state.valid_moves = []
             st.rerun()
     
     with col2:
@@ -919,6 +1120,8 @@ def main():
             if len(st.session_state.move_history) > 0:
                 st.session_state.board.pop()
                 st.session_state.move_history.pop()
+                st.session_state.selected_square = None
+                st.session_state.valid_moves = []
                 st.rerun()
     
     with col3:
@@ -954,41 +1157,35 @@ def main():
         if st.button("💾 SAVE", key="save_game"):
             st.success("Game state saved!")
     
-    # Move input with glass styling
-    st.markdown('<div class="glass-input">', unsafe_allow_html=True)
-    st.markdown("### 💎 Make Your Move")
+    # Interactive move instructions
+    st.markdown("""
+    <div class="drag-instructions">
+        🎯 <strong>How to Play:</strong> Click on a piece to select it, then click on a destination square to move!
+        <br>💎 <strong>Selected pieces</strong> are highlighted in blue, <strong>valid moves</strong> in green.
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Check if player can make a move
-    can_move = st.session_state.game_mode == "single" or is_player_turn()
-    
-    if not can_move and st.session_state.game_mode == "multiplayer":
-        st.markdown("⏳ **Waiting for opponent's move...**")
-        if st.button("🔄 Refresh", key="refresh_turn"):
-            st.rerun()
-    else:
-        move_input = st.text_input("Enter move (UCI):", key="move_input", placeholder="e2e4")
-        
+    # AI Move button for single player
+    if st.session_state.game_mode == "single":
         col1, col2 = st.columns([1, 1])
         with col1:
-            if st.button("♟️ MAKE MOVE", key="make_move"):
-                if move_input:
-                    if make_move(move_input):
+            if st.button("🤖 AI MOVE", key="ai_move", help="Let the AI make a move"):
+                legal_moves = list(st.session_state.board.legal_moves)
+                if legal_moves:
+                    # Simple AI: pick a random move
+                    ai_move = str(random.choice(legal_moves))
+                    if make_move(ai_move):
                         st.rerun()
         
         with col2:
-            if st.session_state.game_mode == "single":
-                if st.button("🤖 AI MOVE", key="ai_move"):
-                    legal_moves = list(st.session_state.board.legal_moves)
-                    if legal_moves:
-                        # Simple AI: pick a random move
-                        ai_move = str(random.choice(legal_moves))
-                        if make_move(ai_move):
-                            st.rerun()
-            else:
-                if st.button("🔄 Refresh Game", key="refresh_multiplayer_move"):
-                    st.rerun()
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+            if st.button("🔄 Refresh", key="refresh_single"):
+                st.rerun()
+    else:
+        # Multiplayer refresh
+        if not is_player_turn():
+            st.markdown("⏳ **Waiting for opponent's move...**")
+            if st.button("🔄 Refresh Game", key="refresh_multiplayer_move"):
+                st.rerun()
     
     # Game information with glass theme
     col1, col2, col3 = st.columns([1, 1, 1])
