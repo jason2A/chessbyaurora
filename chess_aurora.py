@@ -250,6 +250,30 @@ st.markdown("""
         box-shadow: 
             0 8px 32px rgba(255, 215, 0, 0.1),
             0 0 0 1px rgba(255, 255, 255, 0.05);
+        animation: historyPanelFloat 8s ease-in-out infinite;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .move-history::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+        animation: historyShimmer 6s ease-in-out infinite;
+    }
+    
+    @keyframes historyPanelFloat {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-2px); }
+    }
+    
+    @keyframes historyShimmer {
+        0%, 100% { left: -100%; }
+        50% { left: 100%; }
     }
     
     .glass-button {
@@ -267,6 +291,7 @@ st.markdown("""
         position: relative;
         overflow: hidden;
         letter-spacing: 0.01em;
+        animation: buttonPulse 4s ease-in-out infinite;
     }
     
     .glass-button::before {
@@ -285,11 +310,23 @@ st.markdown("""
     }
     
     .glass-button:hover {
-        transform: translateY(-2px);
+        transform: translateY(-2px) scale(1.05);
         box-shadow: 
             0 12px 32px rgba(64, 156, 255, 0.4),
             0 0 0 1px rgba(255, 255, 255, 0.15);
         background: linear-gradient(135deg, rgba(255, 69, 58, 0.9), rgba(255, 215, 0, 0.9));
+        animation: buttonHover 0.3s ease-in-out;
+    }
+    
+    @keyframes buttonPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+    }
+    
+    @keyframes buttonHover {
+        0% { transform: translateY(-2px) scale(1.05); }
+        50% { transform: translateY(-4px) scale(1.08); }
+        100% { transform: translateY(-2px) scale(1.05); }
     }
     
     .stButton > button {
