@@ -587,11 +587,223 @@ st.markdown("""
         border-radius: 4px;
     }
     
-    .move-history::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 215, 0, 0.5);
-    }
-</style>
-""", unsafe_allow_html=True)
+         .move-history::-webkit-scrollbar-thumb:hover {
+         background: rgba(255, 215, 0, 0.5);
+     }
+     
+     /* Liquid Blue Chess Pieces */
+     .chess-square-button {
+         border-radius: 12px !important;
+         border: 3px solid rgba(64, 156, 255, 0.3) !important;
+         font-family: 'SF Mono', 'Monaco', 'Menlo', monospace !important;
+         font-weight: 700 !important;
+         font-size: 2rem !important;
+         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+         box-shadow: 
+             0 4px 16px rgba(64, 156, 255, 0.2),
+             0 0 0 1px rgba(64, 156, 255, 0.1),
+             inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+         min-height: 70px !important;
+         display: flex !important;
+         align-items: center !important;
+         justify-content: center !important;
+         position: relative !important;
+         overflow: hidden !important;
+         background: linear-gradient(135deg, 
+             rgba(64, 156, 255, 0.1), 
+             rgba(100, 200, 255, 0.15), 
+             rgba(64, 156, 255, 0.1)) !important;
+     }
+     
+     .chess-square-button::before {
+         content: '';
+         position: absolute;
+         top: -50%;
+         left: -50%;
+         width: 200%;
+         height: 200%;
+         background: radial-gradient(circle, rgba(64, 156, 255, 0.1) 0%, transparent 70%);
+         animation: liquidFlow 3s ease-in-out infinite;
+         pointer-events: none;
+     }
+     
+     @keyframes liquidFlow {
+         0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+         50% { transform: translate(-50%, -50%) rotate(180deg); }
+     }
+     
+     .chess-square-button:hover {
+         transform: scale(1.05) translateY(-2px) !important;
+         box-shadow: 
+             0 8px 32px rgba(64, 156, 255, 0.4),
+             0 0 0 2px rgba(64, 156, 255, 0.3),
+             inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+         border-color: rgba(64, 156, 255, 0.6) !important;
+         background: linear-gradient(135deg, 
+             rgba(64, 156, 255, 0.2), 
+             rgba(100, 200, 255, 0.25), 
+             rgba(64, 156, 255, 0.2)) !important;
+     }
+     
+     .chess-square-button:active {
+         transform: scale(0.98) translateY(0px) !important;
+         animation: pieceClick 0.3s ease-out !important;
+     }
+     
+     @keyframes pieceClick {
+         0% { transform: scale(1.05) translateY(-2px); }
+         50% { transform: scale(0.95) translateY(1px); }
+         100% { transform: scale(0.98) translateY(0px); }
+     }
+     
+     /* Piece-specific animations */
+     .piece-king { animation: kingGlow 4s ease-in-out infinite; }
+     .piece-queen { animation: queenShimmer 3s ease-in-out infinite; }
+     .piece-rook { animation: rookPulse 2.5s ease-in-out infinite; }
+     .piece-bishop { animation: bishopFloat 3.5s ease-in-out infinite; }
+     .piece-knight { animation: knightBounce 2s ease-in-out infinite; }
+     .piece-pawn { animation: pawnWave 2.8s ease-in-out infinite; }
+     
+     @keyframes kingGlow {
+         0%, 100% { text-shadow: 0 0 10px rgba(64, 156, 255, 0.5); }
+         50% { text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 30px rgba(64, 156, 255, 0.6); }
+     }
+     
+     @keyframes queenShimmer {
+         0%, 100% { filter: brightness(1); }
+         50% { filter: brightness(1.3) saturate(1.2); }
+     }
+     
+     @keyframes rookPulse {
+         0%, 100% { transform: scale(1); }
+         50% { transform: scale(1.05); }
+     }
+     
+     @keyframes bishopFloat {
+         0%, 100% { transform: translateY(0px); }
+         50% { transform: translateY(-3px); }
+     }
+     
+     @keyframes knightBounce {
+         0%, 100% { transform: translateY(0px) rotate(0deg); }
+         25% { transform: translateY(-2px) rotate(1deg); }
+         75% { transform: translateY(-2px) rotate(-1deg); }
+     }
+     
+     @keyframes pawnWave {
+         0%, 100% { transform: translateY(0px); }
+         50% { transform: translateY(-1px) scale(1.02); }
+     }
+     
+     /* Tutor mode styling */
+     .tutor-mode-active {
+         background: linear-gradient(135deg, 
+             rgba(255, 215, 0, 0.15), 
+             rgba(255, 193, 7, 0.2), 
+             rgba(255, 215, 0, 0.15)) !important;
+         border-color: rgba(255, 215, 0, 0.5) !important;
+         box-shadow: 
+             0 4px 16px rgba(255, 215, 0, 0.3),
+             0 0 0 2px rgba(255, 215, 0, 0.3),
+             inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+     }
+     
+     .tutor-hint {
+         position: absolute;
+         top: -25px;
+         left: 50%;
+         transform: translateX(-50%);
+         background: rgba(255, 215, 0, 0.9);
+         color: #000;
+         padding: 4px 8px;
+         border-radius: 8px;
+         font-size: 0.7rem;
+         font-weight: 600;
+         white-space: nowrap;
+         z-index: 1000;
+         animation: hintFloat 2s ease-in-out infinite;
+     }
+     
+     @keyframes hintFloat {
+         0%, 100% { transform: translateX(-50%) translateY(0px); }
+         50% { transform: translateX(-50%) translateY(-3px); }
+     }
+     
+     /* Regular button styling */
+     .stButton > button:not(.chess-square-button) {
+         background: linear-gradient(135deg, rgba(64, 156, 255, 0.9), rgba(255, 69, 58, 0.9)) !important;
+         border: none !important;
+         border-radius: 20px !important;
+         color: white !important;
+         font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif !important;
+         font-weight: 600 !important;
+         padding: 1rem 2rem !important;
+         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+         box-shadow: 
+             0 8px 24px rgba(64, 156, 255, 0.3),
+             0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+         letter-spacing: 0.01em !important;
+     }
+     
+     .stButton > button:not(.chess-square-button):hover {
+         transform: translateY(-2px) !important;
+         box-shadow: 
+             0 12px 32px rgba(64, 156, 255, 0.4),
+             0 0 0 1px rgba(255, 255, 255, 0.15) !important;
+         background: linear-gradient(135deg, rgba(255, 69, 58, 0.9), rgba(255, 215, 0, 0.9)) !important;
+     }
+     
+     /* Difficulty selector styling */
+     .stSelectbox > div > div > div {
+         background: rgba(64, 156, 255, 0.1) !important;
+         border: 2px solid rgba(64, 156, 255, 0.3) !important;
+         border-radius: 12px !important;
+         color: white !important;
+         font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif !important;
+         font-weight: 600 !important;
+         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+     }
+     
+     .stSelectbox > div > div > div:hover {
+         background: rgba(64, 156, 255, 0.2) !important;
+         border-color: rgba(64, 156, 255, 0.6) !important;
+         transform: translateY(-2px) !important;
+         box-shadow: 0 8px 24px rgba(64, 156, 255, 0.3) !important;
+     }
+     
+     /* Checkbox styling */
+     .stCheckbox > label {
+         color: white !important;
+         font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif !important;
+         font-weight: 600 !important;
+         font-size: 1.1rem !important;
+     }
+     
+     .stCheckbox > label > div {
+         background: rgba(64, 156, 255, 0.1) !important;
+         border: 2px solid rgba(64, 156, 255, 0.3) !important;
+         border-radius: 8px !important;
+         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+     }
+     
+     .stCheckbox > label > div:hover {
+         background: rgba(64, 156, 255, 0.2) !important;
+         border-color: rgba(64, 156, 255, 0.6) !important;
+         transform: scale(1.05) !important;
+     }
+     
+     /* Slider styling */
+     .stSlider > div > div > div > div {
+         background: rgba(64, 156, 255, 0.3) !important;
+     }
+     
+     .stSlider > div > div > div > div > div {
+         background: linear-gradient(90deg, rgba(64, 156, 255, 0.8), rgba(255, 215, 0, 0.8)) !important;
+         border-radius: 8px !important;
+         box-shadow: 0 4px 12px rgba(64, 156, 255, 0.4) !important;
+     }
+ </style>
+ """, unsafe_allow_html=True)
 
 def init_chess_game():
     """Initialize a new chess game"""
@@ -619,6 +831,20 @@ def init_chess_game():
         st.session_state.valid_moves = []
     if 'last_click_time' not in st.session_state:
         st.session_state.last_click_time = 0
+    if 'tutor_mode' not in st.session_state:
+        st.session_state.tutor_mode = True
+    if 'tutor_hints' not in st.session_state:
+        st.session_state.tutor_hints = {}
+    if 'last_move_quality' not in st.session_state:
+        st.session_state.last_move_quality = None
+    if 'difficulty_level' not in st.session_state:
+        st.session_state.difficulty_level = "intermediate"
+    if 'ai_thinking_time' not in st.session_state:
+        st.session_state.ai_thinking_time = 2
+    if 'show_hints' not in st.session_state:
+        st.session_state.show_hints = True
+    if 'move_quality_threshold' not in st.session_state:
+        st.session_state.move_quality_threshold = 0.7
 
 def get_board_svg(board, size=500, selected_square=None, valid_moves=None):
     """Convert chess board to SVG with glass theme and interactive squares"""
@@ -659,57 +885,120 @@ def display_board(board):
     selected_square = st.session_state.get('selected_square', None)
     valid_moves = st.session_state.get('valid_moves', [])
     
-    svg_content = get_board_svg(board, selected_square=selected_square, valid_moves=valid_moves)
+    # Create a clickable board using buttons
+    st.markdown('<div class="chess-board-container">', unsafe_allow_html=True)
     
-    # Convert SVG to base64 for display
-    b64 = base64.b64encode(svg_content.encode('utf-8')).decode()
+    # Create 8x8 grid of buttons
+    for rank in range(7, -1, -1):  # Start from rank 8 (top) to rank 1 (bottom)
+        cols = st.columns(8)
+        for file in range(8):
+            square = rank * 8 + file
+            piece = board.piece_at(square)
+            
+            # Get piece symbol and class
+            piece_class = ""
+            if piece:
+                piece_symbol = piece.symbol()
+                if piece.color:  # White piece
+                    piece_symbol = piece_symbol.upper()
+                else:  # Black piece
+                    piece_symbol = piece_symbol.lower()
+                
+                # Add piece-specific animation class
+                piece_type = piece.symbol().lower()
+                if piece_type == 'k':
+                    piece_class = "piece-king"
+                elif piece_type == 'q':
+                    piece_class = "piece-queen"
+                elif piece_type == 'r':
+                    piece_class = "piece-rook"
+                elif piece_type == 'b':
+                    piece_class = "piece-bishop"
+                elif piece_type == 'n':
+                    piece_class = "piece-knight"
+                elif piece_type == 'p':
+                    piece_class = "piece-pawn"
+            else:
+                piece_symbol = ""
+                piece_class = ""
+            
+            # Create button with custom styling
+            with cols[file]:
+                # Get tutor hint if tutor mode is active
+                tutor_hint = ""
+                if st.session_state.get('tutor_mode', False) and st.session_state.get('show_hints', True):
+                    hint_result = get_tutor_hint(board, selected_square)
+                    if hint_result and selected_square == square:
+                        hint_text, quality = hint_result
+                        tutor_hint = f'<div class="tutor-hint">{hint_text}</div>'
+                
+                # Determine button classes
+                button_classes = ["chess-square-button"]
+                if piece_class:
+                    button_classes.append(piece_class)
+                if st.session_state.get('tutor_mode', False):
+                    button_classes.append("tutor-mode-active")
+                
+                # Use custom CSS class for chess squares
+                button_html = f"""
+                <div style="position: relative;">
+                    <button 
+                        class="{' '.join(button_classes)}" 
+                        onclick="handleChessClick({square})"
+                        style="
+                            background: {'rgba(64, 156, 255, 0.8)' if square == selected_square else 
+                                       'rgba(40, 167, 69, 0.8)' if any(move.to_square == square for move in valid_moves) else
+                                       'rgba(248, 249, 250, 0.9)' if (rank + file) % 2 == 0 else 'rgba(108, 117, 125, 0.9)'};
+                            color: {'white' if square == selected_square or any(move.to_square == square for move in valid_moves) or (rank + file) % 2 != 0 else 'black'};
+                            width: 100%;
+                            height: 70px;
+                            border: 3px solid rgba(64, 156, 255, 0.3);
+                            border-radius: 12px;
+                            font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+                            font-weight: 700;
+                            font-size: 2rem;
+                            cursor: pointer;
+                            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            position: relative;
+                            overflow: hidden;
+                        "
+                        title="Square {chr(97 + file)}{rank + 1}"
+                    >
+                        {piece_symbol}
+                    </button>
+                    {tutor_hint}
+                </div>
+                """
+                st.markdown(button_html, unsafe_allow_html=True)
     
-    # Create clickable board with JavaScript
-    st.markdown(f"""
-    <div class="chess-board-container">
-        <div id="chess-board" style="position: relative; display: inline-block;">
-            <img src="data:image/svg+xml;base64,{b64}" alt="Glass Chess Board" style="max-width: 100%; height: auto; cursor: pointer;" 
-                 onclick="handleBoardClick(event)" id="board-image">
-        </div>
-    </div>
-    
+    # Add JavaScript to handle clicks without page reload
+    st.markdown("""
     <script>
-    function handleBoardClick(event) {{
-        const rect = event.target.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
+    function handleChessClick(square) {
+        // Send the square data to Streamlit via a hidden input
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'chess_square_click';
+        input.value = square;
+        input.id = 'chess-click-input';
         
-        // Calculate square coordinates (8x8 grid)
-        const squareSize = rect.width / 8;
-        const file = Math.floor(x / squareSize);
-        const rank = 7 - Math.floor(y / squareSize); // Flip rank for chess notation
+        // Remove any existing input
+        const existing = document.getElementById('chess-click-input');
+        if (existing) existing.remove();
         
-        // Convert to square index
-        const square = rank * 8 + file;
+        document.body.appendChild(input);
         
-        // Send click data to Streamlit
-        const data = {{
-            square: square,
-            file: file,
-            rank: rank
-        }};
-        
-        // Use Streamlit's component bridge to send data
-        if (window.parent && window.parent.postMessage) {{
-            window.parent.postMessage({{
-                type: 'chess-square-click',
-                data: data
-            }}, '*');
-        }}
-        
-        // Also try to trigger a custom event
-        const customEvent = new CustomEvent('chessSquareClick', {{
-            detail: data
-        }});
-        document.dispatchEvent(customEvent);
-    }}
+        // Trigger a custom event that Streamlit can listen for
+        const event = new CustomEvent('chessSquareClick', { detail: { square: square } });
+        document.dispatchEvent(event);
+    }
     </script>
     """, unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def make_move(move_uci):
     """Make a move on the board"""
@@ -796,12 +1085,241 @@ def get_game_status(board):
     else:
         return "normal", "💎 Game in progress 💎"
 
-def get_best_moves(board, num_moves=3):
-    """Get some suggested moves (simplified)"""
+def evaluate_position(board):
+    """Advanced position evaluation with multiple factors"""
+    piece_values = {
+        chess.PAWN: 100, chess.KNIGHT: 320, chess.BISHOP: 330,
+        chess.ROOK: 500, chess.QUEEN: 900, chess.KING: 20000
+    }
+    
+    # Material evaluation
+    white_material = 0
+    black_material = 0
+    
+    # Position evaluation (piece-square tables)
+    pawn_table = [
+        0,  0,  0,  0,  0,  0,  0,  0,
+        50, 50, 50, 50, 50, 50, 50, 50,
+        10, 10, 20, 30, 30, 20, 10, 10,
+        5,  5, 10, 25, 25, 10,  5,  5,
+        0,  0,  0, 20, 20,  0,  0,  0,
+        5, -5,-10,  0,  0,-10, -5,  5,
+        5, 10, 10,-20,-20, 10, 10,  5,
+        0,  0,  0,  0,  0,  0,  0,  0
+    ]
+    
+    knight_table = [
+        -50,-40,-30,-30,-30,-30,-40,-50,
+        -40,-20,  0,  0,  0,  0,-20,-40,
+        -30,  0, 10, 15, 15, 10,  0,-30,
+        -30,  5, 15, 20, 20, 15,  5,-30,
+        -30,  0, 15, 20, 20, 15,  0,-30,
+        -30,  5, 10, 15, 15, 10,  5,-30,
+        -40,-20,  0,  5,  5,  0,-20,-40,
+        -50,-40,-30,-30,-30,-30,-40,-50
+    ]
+    
+    for square in chess.SQUARES:
+        piece = board.piece_at(square)
+        if piece:
+            value = piece_values[piece.piece_type]
+            
+            # Add positional bonus
+            if piece.piece_type == chess.PAWN:
+                if piece.color:  # White pawn
+                    value += pawn_table[square]
+                else:  # Black pawn
+                    value += pawn_table[chess.square_mirror(square)]
+            elif piece.piece_type == chess.KNIGHT:
+                if piece.color:  # White knight
+                    value += knight_table[square]
+                else:  # Black knight
+                    value += knight_table[chess.square_mirror(square)]
+            
+            if piece.color:
+                white_material += value
+            else:
+                black_material += value
+    
+    # Mobility evaluation
+    white_mobility = len(list(board.legal_moves))
+    board.turn = not board.turn
+    black_mobility = len(list(board.legal_moves))
+    board.turn = not board.turn
+    
+    # Center control
+    center_squares = [chess.E4, chess.E5, chess.D4, chess.D5]
+    center_control = 0
+    for square in center_squares:
+        piece = board.piece_at(square)
+        if piece:
+            center_control += 10 if piece.color else -10
+    
+    # King safety
+    white_king_square = board.king(chess.WHITE)
+    black_king_square = board.king(chess.BLACK)
+    
+    white_king_safety = 0
+    black_king_safety = 0
+    
+    if white_king_square is not None:
+        white_king_safety = -10 * (chess.square_rank(white_king_square) + 1)  # Penalize early king moves
+    if black_king_square is not None:
+        black_king_safety = -10 * (8 - chess.square_rank(black_king_square))  # Penalize early king moves
+    
+    total_evaluation = (white_material - black_material) + \
+                      (white_mobility - black_mobility) * 5 + \
+                      center_control + \
+                      (white_king_safety - black_king_safety)
+    
+    return total_evaluation
+
+def get_best_moves(board, num_moves=3, difficulty="intermediate"):
+    """Get intelligent suggested moves based on difficulty level"""
     legal_moves = list(board.legal_moves)
-    if len(legal_moves) > 0:
-        return random.sample(legal_moves, min(num_moves, len(legal_moves)))
-    return []
+    if not legal_moves:
+        return []
+    
+    # Evaluate all moves
+    move_evaluations = []
+    for move in legal_moves:
+        # Make the move
+        board.push(move)
+        evaluation = evaluate_position(board)
+        board.pop()
+        
+        move_evaluations.append((move, evaluation))
+    
+    # Sort moves by evaluation (best first for white, worst first for black)
+    if board.turn:  # White's turn
+        move_evaluations.sort(key=lambda x: x[1], reverse=True)
+    else:  # Black's turn
+        move_evaluations.sort(key=lambda x: x[1], reverse=False)
+    
+    # Apply difficulty-based filtering
+    if difficulty == "beginner":
+        # Show mostly good moves but include some random ones
+        good_moves = move_evaluations[:len(move_evaluations)//2]
+        random_moves = random.sample(move_evaluations, min(2, len(move_evaluations)))
+        filtered_moves = good_moves + random_moves
+        random.shuffle(filtered_moves)
+    elif difficulty == "intermediate":
+        # Show top 70% of moves
+        cutoff = int(len(move_evaluations) * 0.7)
+        filtered_moves = move_evaluations[:cutoff]
+    elif difficulty == "advanced":
+        # Show only top 50% of moves
+        cutoff = int(len(move_evaluations) * 0.5)
+        filtered_moves = move_evaluations[:cutoff]
+    elif difficulty == "expert":
+        # Show only top 30% of moves
+        cutoff = int(len(move_evaluations) * 0.3)
+        filtered_moves = move_evaluations[:cutoff]
+    else:  # master
+        # Show only top 20% of moves
+        cutoff = int(len(move_evaluations) * 0.2)
+        filtered_moves = move_evaluations[:cutoff]
+    
+    # Return moves with their evaluations
+    return [(move, eval_score) for move, eval_score in filtered_moves[:num_moves]]
+
+def get_ai_move(board, difficulty="intermediate"):
+    """Get AI move based on difficulty level"""
+    legal_moves = list(board.legal_moves)
+    if not legal_moves:
+        return None
+    
+    if difficulty == "beginner":
+        # 70% random, 30% best move
+        if random.random() < 0.7:
+            return random.choice(legal_moves)
+        else:
+            best_moves = get_best_moves(board, 1, "beginner")
+            return best_moves[0][0] if best_moves else random.choice(legal_moves)
+    
+    elif difficulty == "intermediate":
+        # 50% random from top moves, 50% best move
+        best_moves = get_best_moves(board, 3, "intermediate")
+        if random.random() < 0.5:
+            return random.choice([move for move, _ in best_moves])
+        else:
+            return best_moves[0][0] if best_moves else random.choice(legal_moves)
+    
+    elif difficulty == "advanced":
+        # 30% random from top moves, 70% best move
+        best_moves = get_best_moves(board, 2, "advanced")
+        if random.random() < 0.3:
+            return random.choice([move for move, _ in best_moves])
+        else:
+            return best_moves[0][0] if best_moves else random.choice(legal_moves)
+    
+    elif difficulty == "expert":
+        # 10% random from top moves, 90% best move
+        best_moves = get_best_moves(board, 2, "expert")
+        if random.random() < 0.1:
+            return random.choice([move for move, _ in best_moves])
+        else:
+            return best_moves[0][0] if best_moves else random.choice(legal_moves)
+    
+    else:  # master
+        # Always play the best move
+        best_moves = get_best_moves(board, 1, "master")
+        return best_moves[0][0] if best_moves else random.choice(legal_moves)
+
+def evaluate_move_quality(move, board):
+    """Evaluate the quality of a specific move"""
+    # Make the move
+    board.push(move)
+    evaluation = evaluate_position(board)
+    board.pop()
+    
+    # Normalize evaluation to 0-1 scale
+    max_evaluation = 1000  # Reasonable maximum
+    normalized_eval = max(-1, min(1, evaluation / max_evaluation))
+    
+    # Convert to 0-1 scale where 1 is best
+    if board.turn:  # White's turn
+        quality = (normalized_eval + 1) / 2
+    else:  # Black's turn
+        quality = (1 - normalized_eval) / 2
+    
+    return quality
+
+def get_tutor_hint(board, selected_square):
+    """Get intelligent tutor hint for selected piece"""
+    if selected_square is None:
+        return None
+    
+    piece = board.piece_at(selected_square)
+    if not piece or piece.color != board.turn:
+        return None
+    
+    legal_moves = [move for move in board.legal_moves if move.from_square == selected_square]
+    if not legal_moves:
+        return None
+    
+    # Evaluate all moves for this piece
+    move_qualities = []
+    for move in legal_moves:
+        quality = evaluate_move_quality(move, board)
+        move_qualities.append((move, quality))
+    
+    # Sort by quality
+    move_qualities.sort(key=lambda x: x[1], reverse=True)
+    
+    best_move, best_quality = move_qualities[0]
+    
+    # Generate hint based on move quality
+    if best_quality > 0.8:
+        hint = f"Excellent move! {chess.square_name(best_move.from_square)} to {chess.square_name(best_move.to_square)}"
+    elif best_quality > 0.6:
+        hint = f"Good move: {chess.square_name(best_move.from_square)} to {chess.square_name(best_move.to_square)}"
+    elif best_quality > 0.4:
+        hint = f"Decent move: {chess.square_name(best_move.from_square)} to {chess.square_name(best_move.to_square)}"
+    else:
+        hint = f"Consider: {chess.square_name(best_move.from_square)} to {chess.square_name(best_move.to_square)}"
+    
+    return hint, best_quality
 
 def analyze_position(board):
     """Analyze the current position using AI"""
@@ -1028,6 +1546,8 @@ def main():
     # Initialize the game
     init_chess_game()
     
+
+    
     # Main container
     st.markdown('<div class="glass-container">', unsafe_allow_html=True)
     
@@ -1103,6 +1623,57 @@ def main():
     
 
     
+    # Difficulty and Tutor Controls
+    st.markdown('<div class="glass-info">', unsafe_allow_html=True)
+    st.markdown("### 🎯 Difficulty & Tutor Settings")
+    
+    col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
+    
+    with col1:
+        difficulty = st.selectbox(
+            "🤖 AI Difficulty:",
+            ["beginner", "intermediate", "advanced", "expert", "master"],
+            index=["beginner", "intermediate", "advanced", "expert", "master"].index(st.session_state.difficulty_level),
+            key="difficulty_select"
+        )
+        if difficulty != st.session_state.difficulty_level:
+            st.session_state.difficulty_level = difficulty
+            st.rerun()
+    
+    with col2:
+        tutor_mode = st.checkbox(
+            "🎓 Tutor Mode",
+            value=st.session_state.tutor_mode,
+            key="tutor_checkbox"
+        )
+        if tutor_mode != st.session_state.tutor_mode:
+            st.session_state.tutor_mode = tutor_mode
+            st.rerun()
+    
+    with col3:
+        show_hints = st.checkbox(
+            "💡 Show Hints",
+            value=st.session_state.show_hints,
+            key="hints_checkbox"
+        )
+        if show_hints != st.session_state.show_hints:
+            st.session_state.show_hints = show_hints
+            st.rerun()
+    
+    with col4:
+        thinking_time = st.slider(
+            "⏱️ AI Thinking Time (sec):",
+            min_value=1,
+            max_value=10,
+            value=st.session_state.ai_thinking_time,
+            key="thinking_slider"
+        )
+        if thinking_time != st.session_state.ai_thinking_time:
+            st.session_state.ai_thinking_time = thinking_time
+            st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     # Game controls
     col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
     
@@ -1172,10 +1743,11 @@ def main():
             if st.button("🤖 AI MOVE", key="ai_move", help="Let the AI make a move"):
                 legal_moves = list(st.session_state.board.legal_moves)
                 if legal_moves:
-                    # Simple AI: pick a random move
-                    ai_move = str(random.choice(legal_moves))
-                    if make_move(ai_move):
-                        st.rerun()
+                    # Use advanced AI with difficulty level
+                    ai_move = get_ai_move(st.session_state.board, st.session_state.difficulty_level)
+                    if ai_move:
+                        if make_move(str(ai_move)):
+                            st.rerun()
         
         with col2:
             if st.button("🔄 Refresh", key="refresh_single"):
@@ -1207,12 +1779,14 @@ def main():
         else:
             st.markdown("**Game Mode:** 🎮 Single Player")
         
-        # Show some suggested moves
-        best_moves = get_best_moves(st.session_state.board)
+        # Show intelligent suggested moves based on difficulty
+        best_moves = get_best_moves(st.session_state.board, 3, st.session_state.difficulty_level)
         if best_moves:
-            st.markdown("**💎 Suggested Moves:**")
-            for i, move in enumerate(best_moves, 1):
-                st.markdown(f"  {i}. `{move}`")
+            st.markdown(f"**💎 Suggested Moves ({st.session_state.difficulty_level.title()}):**")
+            for i, (move, evaluation) in enumerate(best_moves, 1):
+                # Convert evaluation to a more readable format
+                eval_text = f"{evaluation:+.0f}"
+                st.markdown(f"  {i}. `{move}` ({eval_text})")
         
         st.markdown(f"**FEN:** `{st.session_state.board.fen()}`")
         st.markdown('</div>', unsafe_allow_html=True)
