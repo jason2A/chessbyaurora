@@ -898,11 +898,13 @@ def display_board(board):
             # Get piece symbol and class
             piece_class = ""
             if piece:
-                piece_symbol = piece.symbol()
-                if piece.color:  # White piece
-                    piece_symbol = piece_symbol.upper()
-                else:  # Black piece
-                    piece_symbol = piece_symbol.lower()
+                # Use proper chess piece symbols
+                piece_symbols = {
+                    'k': '♔', 'q': '♕', 'r': '♖', 'b': '♗', 'n': '♘', 'p': '♙',  # White pieces
+                    'K': '♚', 'Q': '♛', 'R': '♜', 'B': '♝', 'N': '♞', 'P': '♟'   # Black pieces
+                }
+                
+                piece_symbol = piece_symbols.get(piece.symbol(), piece.symbol())
                 
                 # Add piece-specific animation class
                 piece_type = piece.symbol().lower()
@@ -956,7 +958,7 @@ def display_board(board):
                             border-radius: 12px;
                             font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
                             font-weight: 700;
-                            font-size: 2rem;
+                            font-size: 2.5rem;
                             cursor: pointer;
                             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
                             display: flex;
