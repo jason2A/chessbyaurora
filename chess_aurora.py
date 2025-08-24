@@ -1,6 +1,5 @@
 import streamlit as st
 import chess
-import chess.svg
 import time
 import random
 import os
@@ -14,177 +13,61 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Glassy luxurious bubble + animations CSS
+# CSS for glass theme and piece animations (shortened for brevity, use your full CSS)
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;700&family=SF+Mono&display=swap');
-
-body, .stApp {
-    margin: 0; padding: 0;
-    background: linear-gradient(135deg, #0a0a0a, #1a1a2e, #16213e, #0f3460, #533483);
-    background-size: 400% 400%;
-    animation: glassGradient 12s ease infinite;
-    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-    color: white;
-}
-@keyframes glassGradient {
-    0% {background-position:0% 50%;}
-    50% {background-position:100% 50%;}
-    100% {background-position:0% 50%;}
-}
-
+* { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 .glass-container {
-    background: rgba(255 255 255 / 0.12);
-    backdrop-filter: blur(28px);
-    -webkit-backdrop-filter: blur(28px);
-    border-radius: 48px;
-    border: 1.5px solid rgba(64 156 255 / 0.3);
-    box-shadow:
-        0 12px 36px rgba(64 156 255 / 0.35),
-        inset 0 0 12px rgba(255 255 255 / 0.2);
-    max-width: 750px;
-    margin: 3rem auto 2rem auto;
-    padding: 2rem;
-    animation: floatBubble 8s ease-in-out infinite;
-    user-select: none;
-}
-
-@keyframes floatBubble {
-  0%,100% {transform: translateY(0) scale(1);}
-  50% {transform: translateY(-15px) scale(1.02);}
-}
-
-.glass-title {
-    text-align: center;
-    font-weight: 700;
-    font-size: 3.8rem;
-    margin-bottom: 0.75rem;
-    color: #58abff;
-    text-shadow:
-      0 0 10px #3388ff,
-      0 0 25px #5ab0ff;
-    letter-spacing: -.02em;
-    animation: titleGlow 4s ease-in-out infinite alternate;
-}
-@keyframes titleGlow {
-    0% {text-shadow: 0 0 10px #3388ff;}
-    100% {text-shadow: 0 0 20px #5ab0ff;}
-}
-.glass-subtitle {
-    font-weight: 400;
-    text-align: center;
-    font-size: 1.3rem;
-    margin-bottom: 2.5rem;
-    color: #acd4ffcc;
-    text-shadow: 0 0 5px #3388ffcc;
-    animation: subtitlePulse 5s ease-in-out infinite;
-}
-@keyframes subtitlePulse {
-    0%,100% {opacity:.85; transform: translateY(0);}
-    50% {opacity:1; transform: translateY(-2px);}
-}
-
-.chess-bubble {
-    border-radius: 42px;
-    box-shadow:
-      0 0 40px rgba(64 156 255 / 0.7),
-      inset 0 0 40px rgba(255 255 255 / 0.25);
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(30px);
+    border-radius: 32px;
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 3rem;
+    margin: 2rem auto;
+    max-width: 1400px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3),
+                0 0 0 1px rgba(255,255,255,0.05),
+                inset 0 1px 0 rgba(255,255,255,0.1);
+    position: relative;
     overflow: hidden;
-    padding: 1.25rem;
-    background: radial-gradient(circle at center, rgba(64 156 255 / 0.12), transparent);
-    transition: box-shadow 0.4s ease;
-    user-select: none;
+    animation: containerFloat 6s ease-in-out infinite;
 }
-.chess-bubble:hover {
-    box-shadow:
-      0 0 72px rgba(64 156 255 / 0.9),
-      inset 0 0 66px rgba(255 255 255 / 0.35);
+@keyframes containerFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
 }
-
-.chessboard {
-    display: grid;
-    grid-template-columns: repeat(8, 72px);
-    grid-template-rows: repeat(8, 72px);
-    border-radius: 36px;
-    box-shadow: 0 0 30px rgba(64 156 255 / 0.6);
-    margin: 0 auto;
-}
-
-.square {
-    border-radius: 16px;
+.chess-board-container {
     display: flex;
     justify-content: center;
-    align-items: center;
-    transition: 0.3s ease all;
-    cursor: pointer;
-}
-.square.light {
-    background: linear-gradient(135deg, #c6d7ff, #a6c9ff);
-    color: #1b3169;
-    box-shadow: inset 0 0 8px rgba(255 255 255 / 0.75);
-}
-.square.dark {
-    background: linear-gradient(135deg, #5079c5, #2f51a2);
-    color: #cde3ff;
-}
-.square.selected {
-    background: radial-gradient(circle at center, #ffd700a0, #bf9a00a0);
-    box-shadow: 0 0 28px 6px #ffd700cc, inset 0 0 20px #fff2aaaa;
-    transform: scale(1.15);
-    transition: 0.2s ease all;
-    z-index: 5;
+    margin: 2.5rem 0;
     position: relative;
+    animation: boardContainerPulse 8s ease-in-out infinite;
 }
-.square.move {
-    background: radial-gradient(circle at center, #54a0ffc2, #1972deae);
-    box-shadow: 0 0 28px 5px #1972dea9;
+@keyframes boardContainerPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.01); }
 }
-.square:hover:not(.selected):not(.move) {
-    transform: scale(1.10);
-    box-shadow: 0 0 16px 6px #5aa4ffcc;
+.chess-square-button {
+    border-radius: 12px !important;
+    border: 3px solid rgba(64,156,255,0.3) !important;
+    font-family: 'SF Mono', 'Monaco', 'Menlo', monospace !important;
+    font-weight: 700 !important;
+    font-size: 2rem !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 4px 16px rgba(64,156,255,0.2),0 0 0 1px rgba(64,156,255,0.1),inset 0 1px 0 rgba(255,255,255,0.2) !important;
+    min-height: 70px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    overflow: hidden !important;
+    background: linear-gradient(135deg, rgba(64,156,255,0.1), rgba(100,200,255,0.15), rgba(64,156,255,0.1)) !important;
 }
-
-.piece {
-    font-size: 3.8rem;
-    user-select: none;
-    filter: drop-shadow(0 0 4px #72a0ff);
-    transition: filter 0.3s ease, transform 0.3s ease;
-}
-
-.piece.king {
-    animation: kingGlow 6s ease-in-out infinite;
-}
-@keyframes kingGlow {
-  0%, 100% {filter: drop-shadow(0 0 6px #ffd700cc);}
-  50% {filter: drop-shadow(0 0 20px #fff166cc);}
-}
-
-.piece.queen {
-    animation: queenGlow 4s ease-in-out infinite;
-}
-@keyframes queenGlow {
-  0%, 100% {opacity: 1; filter: drop-shadow(0 0 10px #54a0ffcc);}
-  50% {opacity: 0.85; filter: drop-shadow(0 0 24px #7cc3ffcc);}
-}
-
-.piece.rook, .piece.bishop, .piece.knight, .piece.pawn {
-    animation: pulse 5s ease-in-out infinite;
-}
-@keyframes pulse {
-  0%, 100% {filter: drop-shadow(0 0 6px #5dd0ffcc);}
-  50% {filter: drop-shadow(0 0 20px #a6d5ffcc);}
-}
-
-.chess-bubble button:hover > .piece {
-    transform: scale(1.22);
-    filter: drop-shadow(0 0 30px #ffd966cc);
-}
-
 </style>
 """, unsafe_allow_html=True)
 
-
-def init_game():
+def init_chess_game():
     if 'board' not in st.session_state:
         st.session_state.board = chess.Board()
     if 'move_history' not in st.session_state:
@@ -195,210 +78,176 @@ def init_game():
         st.session_state.valid_moves = []
     if 'game_mode' not in st.session_state:
         st.session_state.game_mode = "single"
-    if 'difficulty' not in st.session_state:
-        st.session_state.difficulty = "intermediate"
-    if 'waiting' not in st.session_state:
-        st.session_state.waiting = False
+    if 'difficulty_level' not in st.session_state:
+        st.session_state.difficulty_level = "intermediate"
+    if 'tutor_mode' not in st.session_state:
+        st.session_state.tutor_mode = True
+    if 'show_hints' not in st.session_state:
+        st.session_state.show_hints = True
+    if 'move_quality_threshold' not in st.session_state:
+        st.session_state.move_quality_threshold = 0.7
 
-
-def square_name_from_index(index):
-    file = index % 8
-    rank = 8 - (index // 8)
-    return chr(ord('a') + file) + str(rank)
-
-
-def handle_clicks():
-    # Using latest recommended way to read query params
-    qp = st.experimental_get_query_params()
-    if 'square' in qp:
-        clicked = int(qp['square'][0])
-        selected = st.session_state.selected_square
-        board = st.session_state.board
-
-        # Deselect if clicked same square
-        if selected == clicked:
+def make_move(move_uci):
+    try:
+        move = chess.Move.from_uci(move_uci)
+        if move in st.session_state.board.legal_moves:
+            st.session_state.board.push(move)
+            st.session_state.move_history.append(move_uci)
             st.session_state.selected_square = None
-            st.experimental_set_query_params()
-            st.experimental_rerun()
-            return
-
-        if selected is None:
-            piece = board.piece_at(clicked)
-            if piece is not None and piece.color == board.turn:
-                st.session_state.selected_square = clicked
-            st.experimental_set_query_params()
-            st.experimental_rerun()
-            return
-
-        # Try move if second click
-        move = chess.Move(selected, clicked)
-
-        # Check for promotion case on last rank
-        piece = board.piece_at(selected)
-        if piece and piece.piece_type == chess.PAWN:
-            if (piece.color and clicked >= 56) or (not piece.color and clicked < 8):
-                move = chess.Move(selected, clicked, promotion=chess.QUEEN)
-
-        if move in board.legal_moves:
-            board.push(move)
-            st.session_state.move_history.append(move.uci())
-            st.session_state.selected_square = None
-            st.experimental_set_query_params()
-            st.experimental_rerun()
+            st.session_state.valid_moves = []
+            return True
         else:
-            # Select new square if invalid move
-            piece = board.piece_at(clicked)
-            if piece and piece.color == board.turn:
-                st.session_state.selected_square = clicked
-                st.experimental_set_query_params()
+            st.error("💎 Invalid move! Try again!")
+            return False
+    except ValueError:
+        st.error("💎 Invalid move format! Use UCI notation (e.g., 'e2e4', 'g1f3')")
+        return False
+
+def select_square(square):
+    piece = st.session_state.board.piece_at(square)
+    if piece and piece.color == st.session_state.board.turn:
+        st.session_state.selected_square = square
+        st.session_state.valid_moves = [move for move in st.session_state.board.legal_moves if move.from_square == square]
+    else:
+        st.session_state.selected_square = None
+        st.session_state.valid_moves = []
+
+def handle_square_click(square):
+    if not (st.session_state.game_mode == "single" or is_player_turn()):
+        return
+    if st.session_state.selected_square is not None:
+        from_sq = st.session_state.selected_square
+        to_sq = square
+        move = chess.Move(from_sq, to_sq)
+        piece = st.session_state.board.piece_at(from_sq)
+        if piece and piece.piece_type == chess.PAWN:
+            if (piece.color and to_sq >= 56) or (not piece.color and to_sq <= 7):
+                move = chess.Move(from_sq, to_sq, promotion=chess.QUEEN)
+        if move in st.session_state.board.legal_moves:
+            if make_move(move.uci()):
                 st.experimental_rerun()
-            else:
-                st.session_state.selected_square = None
-                st.experimental_set_query_params()
-                st.experimental_rerun()
+        else:
+            select_square(square)
+    else:
+        select_square(square)
 
+def is_player_turn():
+    if st.session_state.game_mode == "single":
+        return True
+    # Multiplayer turn logic can be added here
+    return True
 
-def render_board():
-    board = st.session_state.board
-    selected = st.session_state.selected_square
-
-    files = 'abcdefgh'
-    ranks = range(8, 0, -1)
-
-    st.markdown('<div class="chess-bubble">', unsafe_allow_html=True)
-    st.markdown('<div class="chessboard">', unsafe_allow_html=True)
-
-    for rank in ranks:
-        for file_i in range(8):
-            square = chess.square(file_i, rank - 1)
-            color_square = 'light' if (rank + file_i) % 2 == 0 else 'dark'
-            is_selected = (selected == square)
-            has_move = False
-            if selected is not None:
-                legal = [move for move in board.legal_moves if move.from_square == selected]
-                has_move = any(move.to_square == square for move in legal)
+def display_board(board):
+    selected_square = st.session_state.get('selected_square', None)
+    valid_moves = st.session_state.get('valid_moves', [])
+    st.markdown('<div class="chess-board-container">', unsafe_allow_html=True)
+    for rank in range(7, -1, -1):
+        cols = st.columns(8)
+        for file in range(8):
+            square = chess.square(file, rank)
             piece = board.piece_at(square)
-
-            classes = f"square {color_square}"
-            if is_selected:
-                classes = 'square selected'
-            elif has_move:
-                classes = 'square move'
-
-            # Piece unicode with styling classes for animation
-            piece_unicode = ''
+            piece_symbols = {
+                'k': '♔', 'q': '♕', 'r': '♖', 'b': '♗',
+                'n': '♘', 'p': '♙', 'K': '♚', 'Q': '♛',
+                'R': '♜', 'B': '♝', 'N': '♞', 'P': '♟'
+            }
+            piece_symbol = piece_symbols.get(piece.symbol(), '') if piece else ''
             piece_class = ''
             if piece:
-                piece_unicode_map = {
-                    chess.PAWN: ('♙', 'pawn'),
-                    chess.KNIGHT: ('♘','knight'),
-                    chess.BISHOP: ('♗','bishop'),
-                    chess.ROOK: ('♖','rook'),
-                    chess.QUEEN: ('♕','queen'),
-                    chess.KING: ('♔','king'),
-                }
-                p_char, p_class = piece_unicode_map.get(piece.piece_type, ('', ''))
-                # flip color for black pieces
-                if not piece.color:
-                    p_char = p_char.lower()
-                piece_unicode = p_char
-                piece_class = f'piece {p_class}'
-
-            sq_name = square_name_from_index(square)
-
-            # Render each square button
-            html = f"""
-            <div class="{classes}" title="{sq_name}">
-              <button style="all:unset; width:100%; height:100%; cursor:pointer; user-select:none;"
-                onclick="(() => {{
-                  const queryParams = new URLSearchParams(window.location.search);
-                  queryParams.set('square', {square});
-                  window.history.replaceState(null, '', window.location.pathname + '?' + queryParams);
-                  const input = document.createElement('input');
-                  input.type = 'hidden';
-                  input.name = 'square';
-                  input.value = {square};
-                  input.id = 'square-input';
-                  if(document.getElementById('square-input')) document.getElementById('square-input').remove();
-                  document.body.appendChild(input);
-                  const evt = new Event('submit');
-                  document.dispatchEvent(evt);
-                }})()">
-                <span class="{piece_class}">{piece_unicode}</span>
-              </button>
-            </div>"""
-            st.markdown(html, unsafe_allow_html=True)
-
-    st.markdown('</div></div>', unsafe_allow_html=True)
-
+                pt = piece.symbol().lower()
+                if pt == 'k': piece_class = "piece-king"
+                elif pt == 'q': piece_class = "piece-queen"
+                elif pt == 'r': piece_class = "piece-rook"
+                elif pt == 'b': piece_class = "piece-bishop"
+                elif pt == 'n': piece_class = "piece-knight"
+                elif pt == 'p': piece_class = "piece-pawn"
+            bg_color = 'rgba(64, 156, 255, 0.8)' if square == selected_square else \
+                       'rgba(40, 167, 69, 0.8)' if any(move.to_square == square for move in valid_moves) else \
+                       'rgba(248, 249, 250, 0.9)' if (rank + file) % 2 == 0 else 'rgba(108, 117, 125, 0.9)'
+            text_color = 'white' if square==selected_square or any(move.to_square==square for move in valid_moves) or ((rank+file)%2!=0) else 'black'
+            with cols[file]:
+                button_html = f"""
+                <div style="position: relative;">
+                    <button class="chess-square-button {piece_class}" onclick="handleChessClick({square})"
+                        style="background: {bg_color}; color: {text_color}; width: 100%; height: 70px; border-radius: 12px;
+                               font-family: 'SF Mono', 'Monaco', 'Menlo', monospace; font-weight: 700; font-size: 2.5rem;
+                               cursor: pointer; display: flex; align-items: center; justify-content: center;
+                               position: relative; overflow: hidden;">
+                        {piece_symbol}
+                    </button>
+                </div>
+                """
+                st.markdown(button_html, unsafe_allow_html=True)
+    st.markdown("""
+    <script>
+    function handleChessClick(square) {
+        const prev = document.getElementById('chess-click-input');
+        if(prev) prev.remove();
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'chess_square_click';
+        input.value = square;
+        input.id = 'chess-click-input';
+        document.body.appendChild(input);
+        const event = new CustomEvent('chessSquareClick', { detail: { square: square } });
+        document.dispatchEvent(event);
+    }
+    </script>
+    """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def main():
-    init_game()
-    handle_clicks()
+    init_chess_game()
+
+    # Handle chess square click from HTML/JS if any
+    if 'chess_square_click' in st.experimental_get_query_params():
+        clicked_square = int(st.experimental_get_query_params()['chess_square_click'][0])
+        handle_square_click(clicked_square)
+        # Clear query param to prevent repeated clicks
+        st.experimental_set_query_params()
 
     st.markdown('<div class="glass-container">', unsafe_allow_html=True)
-    st.markdown('<h1 class="glass-title">💎 Glass Chess 💎</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="glass-title">💎 GLASS CHESS 💎</h1>', unsafe_allow_html=True)
     st.markdown('<p class="glass-subtitle">Where elegance meets strategy in a crystal-clear interface</p>', unsafe_allow_html=True)
 
-    render_board()
+    display_board(st.session_state.board)
 
-    # Show game info
-    board = st.session_state.board
-    status, msg = "normal", "Game in progress"
+    status, message = get_game_status(st.session_state.board)
+    if status != "normal":
+        st.markdown(f'<div class="status-message status-{status}">{message}</div>', unsafe_allow_html=True)
 
-    if board.is_checkmate():
-        status, msg = "checkmate", "💥 Checkmate! Game over."
-    elif board.is_stalemate():
-        status, msg = "stalemate", "♖ Stalemate! Draw."
-    elif board.is_check():
-        status, msg = "check", "🛡️ Check! Protect your king."
-
-    st.markdown(f'<div class="glass-subtitle" style="text-align:center; margin-top:1rem;">{msg}</div>', unsafe_allow_html=True)
-
-    # Show move history
-    st.markdown("<h3 style='text-align:center;'>Move History</h3>", unsafe_allow_html=True)
-    moves_str = ""
-    for idx, move in enumerate(st.session_state.move_history, 1):
-        moves_str += f"{idx}. {move} &nbsp;&nbsp; "
-        if idx % 5 == 0:
-            moves_str += "<br>"
-
-    st.markdown(f"<div style='font-family: SF Mono, monospace; font-size:14px; color:#aad4ff; max-height:150px; overflow:auto; background: rgba(20,30,60,0.5); border-radius:12px; padding:10px;'>{moves_str}</div>", unsafe_allow_html=True)
-
-    # Controls
-    col1, col2, col3, col4 = st.columns(4)
+    # Game controls simplified for demo
+    col1, col2 = st.columns(2)
     with col1:
-        if st.button("🔄 New Game"):
+        if st.button("💎 NEW GAME"):
             st.session_state.board = chess.Board()
             st.session_state.move_history = []
             st.session_state.selected_square = None
-            st.experimental_set_query_params()
+            st.session_state.valid_moves = []
             st.experimental_rerun()
     with col2:
-        if st.button("↩️ Undo Move"):
+        if st.button("↩️ UNDO"):
             if len(st.session_state.board.move_stack) > 0:
                 st.session_state.board.pop()
                 if st.session_state.move_history:
                     st.session_state.move_history.pop()
                 st.session_state.selected_square = None
-                st.experimental_set_query_params()
+                st.session_state.valid_moves = []
                 st.experimental_rerun()
-    with col3:
-        if st.button("🤖 AI Move"):
-            if st.session_state.board.turn and len(list(st.session_state.board.legal_moves)) > 0:
-                moves = list(st.session_state.board.legal_moves)
-                ai_move = random.choice(moves)
-                st.session_state.board.push(ai_move)
-                st.session_state.move_history.append(ai_move.uci())
-                st.session_state.selected_square = None
-                st.experimental_set_query_params()
-                st.experimental_rerun()
-    with col4:
-        if st.button("📋 Show FEN"):
-            st.code(st.session_state.board.fen())
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
+def get_game_status(board):
+    if board.is_checkmate():
+        return "checkmate", "💎 CHECKMATE! The game is over! 💎"
+    elif board.is_stalemate():
+        return "stalemate", "⚖️ STALEMATE! The game is a draw! ⚖️"
+    elif board.is_insufficient_material():
+        return "stalemate", "⚖️ Insufficient material! Draw! ⚖️"
+    elif board.is_check():
+        return "check", "⚡ CHECK! Your king is in danger! ⚡"
+    else:
+        return "normal", "💎 Game in progress 💎"
 
 if __name__ == "__main__":
     main()
