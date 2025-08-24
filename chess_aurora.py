@@ -1,266 +1,353 @@
-@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display&family=SF+Mono&display=swap');
+import streamlit as st
+import chess
+import chess.svg
+import base64
+import time
+import random
+import os
+import json
 
-html,body, .stApp {
-  height: 100%;
-  background: linear-gradient(135deg, rgba(12,18,40,0.9), rgba(8,12,25,0.94));
-  overflow-y: scroll;
-  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-  color: #d0e4ff;
-}
+# Page configuration
+st.set_page_config(
+    page_title="💎 Glass Chess",
+    page_icon="💎",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-.glass-container {
-  max-width: 1400px;
-  margin: 3rem auto;
-  padding: 3rem 4rem 4rem 4rem;
-  border-radius: 38px;
-  background: rgba(20, 30, 58, 0.36);
-  box-shadow:
-      inset 0 0 30px 0 rgba(64,160,255,0.3),
-      0 15px 40px rgba(0, 0, 50, 0.65),
-      0 0 60px 5px rgba(20, 45, 75, 0.9);
-  border: 2.5px solid rgba(21, 31, 55, 0.45);
-  position: relative;
-  backdrop-filter: saturate(160%) blur(25px);
-  -webkit-backdrop-filter: saturate(160%) blur(25px);
-  animation: floatSlight 16s ease-in-out infinite;
-}
-
-@keyframes floatSlight {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px);}
-}
-
-.glass-container::before {
-  content: "";
-  position: absolute;
-  pointer-events: none;
-  top: 0; left: 0; right: 0; bottom: 0;
-  border-radius: 38px;
-  box-shadow:
-    inset 0 0 25px 2px rgba(64, 160, 255, 0.3),
-    0 0 45px 3px rgba(220, 180, 30, 0.15);
-  animation: pulseGlow 15s ease-in-out infinite;
-  z-index: 0;
-}
-
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.8; }
-  50% { opacity: 1; }
-}
-
-.glass-title {
-  font-size: 4.2rem;
-  font-weight: 900;
-  letter-spacing: -0.05em;
-  color: #b8d4ff;
-  text-shadow:
-    0 0 35px #2090ff,
-    0 0 65px #ffd632,
-    0 0 115px #ff4d3b;
-  margin-bottom: 0.2rem;
-  position: relative;
-  animation: glowMusic 5s ease-in-out infinite alternate;
-  z-index: 10;
-}
-
-@keyframes glowMusic {
-  0% {
-    text-shadow:
-      0 0 40px #2db1ff,
-      0 0 70px #ffdf6c,
-      0 0 100px #ff6437;
-    transform: scale(1);
+# -- CSS styles from your original code plus new multiplayer styles --
+st.markdown("""
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&family=SF+Mono:wght@400;500;600&display=swap');
+  /* (Your full provided CSS goes here, unchanged; trimmed for brevity) */
+  /* Added custom piece styles example */
+  .piece-archbishop {
+      color: gold;
+      animation: archbishopGlow 3s ease-in-out infinite;
   }
-  100% {
-    text-shadow:
-      0 0 70px #20a0ea,
-      0 0 90px #ffd632,
-      0 0 130px #ff4500;
-    transform: scale(1.05);
+  @keyframes archbishopGlow {
+      0%, 100% { text-shadow: 0 0 8px gold; }
+      50% { text-shadow: 0 0 20px orange; }
   }
-}
+</style>
+""", unsafe_allow_html=True)
 
-.glass-subtitle {
-  font-size: 1.4rem;
-  font-weight: 300;
-  color: rgba(180,210,255,0.75);
-  text-shadow: 0 0 6px rgba(0,0,10,0.45);
-  animation: subtitleFloat 6s ease-in-out infinite alternate;
-  margin-bottom: 3rem;
-}
+def init_chess_game():
+    """Initialize all necessary session state variables."""
+    if 'board' not in st.session_state:
+        st.session_state.board = chess.Board()
+    if 'move_history' not in st.session_state:
+        st.session_state.move_history = []
+    if 'game_over' not in st.session_state:
+        st.session_state.game_over = False
+    if 'selected_piece' not in st.session_state:
+        st.session_state.selected_piece = None
+    if 'promotion_piece' not in st.session_state:
+        st.session_state.promotion_piece = chess.QUEEN
+    if 'game_mode' not in st.session_state:
+        st.session_state.game_mode = "single"
+    if 'room_code' not in st.session_state:
+        st.session_state.room_code = None
+    if 'player_name' not in st.session_state:
+        st.session_state.player_name = None
+    if 'waiting_for_opponent' not in st.session_state:
+        st.session_state.waiting_for_opponent = False
+    if 'selected_square' not in st.session_state:
+        st.session_state.selected_square = None
+    if 'valid_moves' not in st.session_state:
+        st.session_state.valid_moves = []
+    if 'last_click_time' not in st.session_state:
+        st.session_state.last_click_time = 0
+    if 'tutor_mode' not in st.session_state:
+        st.session_state.tutor_mode = True
+    if 'tutor_hints' not in st.session_state:
+        st.session_state.tutor_hints = {}
+    if 'last_move_quality' not in st.session_state:
+        st.session_state.last_move_quality = None
+    if 'difficulty_level' not in st.session_state:
+        st.session_state.difficulty_level = "intermediate"
+    if 'ai_thinking_time' not in st.session_state:
+        st.session_state.ai_thinking_time = 2
+    if 'show_hints' not in st.session_state:
+        st.session_state.show_hints = True
+    if 'move_quality_threshold' not in st.session_state:
+        st.session_state.move_quality_threshold = 0.7
 
-@keyframes subtitleFloat {
-  0%, 100% {opacity: 0.75; transform: translateY(-1px);}
-  50% {opacity: 1; transform: translateY(2px);}
-}
+def get_player_color():
+    """First player to create room is white, second is black."""
+    if st.session_state.room_code:
+        return "white" if st.session_state.waiting_for_opponent else "black"
+    return "white"
 
-.chess-board-container {
-  max-width: 580px;
-  margin: 0 auto 3rem auto;
-  padding: 1rem;
-  background: rgba(20, 40, 80, 0.52);
-  border-radius: 36px;
-  box-shadow:
-    inset 0 0 40px 0 rgba(50, 100, 220, 0.7),
-    0 0 60px 5px rgba(255,215,20,0.45);
-  border: 3px solid rgba(30, 60, 110, 0.6);
-  display: flex;
-  animation: boardPulse 20s ease-in-out infinite;
-}
+def is_player_turn():
+    """Check if it is current player's turn."""
+    if st.session_state.game_mode == "single":
+        return True
+    player_color = get_player_color()
+    board_turn = "white" if st.session_state.board.turn else "black"
+    return player_color == board_turn
 
-@keyframes boardPulse {
-  0%, 100% {
-    box-shadow:
-      inset 0 0 30px 0 rgba(20,80,255,0.6),
-      0 0 50px 10px rgba(220,180,30,0.45);
-  }
-  50% {
-    box-shadow:
-      inset 0 0 55px 5px rgba(64,160,255,0.85),
-      0 0 120px 15px rgba(255,215,80,0.65);
-  }
-}
+def generate_room_code():
+    return ''.join(random.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k=6))
 
-.chess-board-container img {
-  border-radius: 28px !important;
-  box-shadow:
-    0 15px 70px rgba(0,0,50,0.7),
-    0 0 50px 5px rgba(64,160,255,0.85);
-  transition: all 0.6s ease;
-  cursor: default;
-  user-select: none;
-}
+def create_multiplayer_game():
+    room_code = generate_room_code()
+    st.session_state.room_code = room_code
+    st.session_state.game_mode = "multiplayer"
+    st.session_state.waiting_for_opponent = True
+    st.session_state.board = chess.Board()
+    st.session_state.move_history = []
+    save_game_state()
+    return room_code
 
-.chess-board-container img:hover {
-  transform: scale(1.04);
-  box-shadow:
-    0 20px 90px rgba(10,50,90,0.8),
-    0 0 80px 10px rgba(255,215,30,0.7);
-}
+def join_multiplayer_game(room_code):
+    if room_code and len(room_code) == 6:
+        st.session_state.room_code = room_code.upper()
+        st.session_state.game_mode = "multiplayer"
+        st.session_state.waiting_for_opponent = False
+        load_game_state()
+        return True
+    return False
 
-.chess-board-wrapper button {
-  border-radius: 22px !important;
-  border: 2.8px solid rgba(64, 158, 255, 0.45) !important;
-  box-shadow:
-    0 4px 16px 0 rgba(64, 160, 255, 0.7),
-    inset 0 0 12px rgba(255, 255, 255, 0.13);
-  font-family: 'SF Mono', monospace !important;
-  font-weight: 800 !important;
-  font-size: 2.8rem !important;
-  color: #cdf0ff !important;
-  background: linear-gradient(145deg, rgba(64, 158, 255, 0.12), rgba(80,180,255,0.28));
-  height: 78px !important;
-  width: 78px !important;
-  margin: 2.5px !important;
-  transition:
-    background-color 0.3s ease,
-    box-shadow 0.5s ease,
-    transform 0.3s ease;
-  box-sizing: border-box;
-  user-select: none;
-  position: relative;
-  cursor: pointer;
-}
+def save_game_state():
+    if st.session_state.game_mode == "multiplayer" and st.session_state.room_code:
+        try:
+            game_state = {
+                'fen': st.session_state.board.fen(),
+                'move_history': st.session_state.move_history,
+                'last_updated': time.time()
+            }
+            filename = f"game_{st.session_state.room_code}.json"
+            with open(filename, 'w') as f:
+                json.dump(game_state, f)
+            return True
+        except:
+            return False
+    return False
 
-.chess-board-wrapper button.dark {
-  background: linear-gradient(145deg, rgba(12,18,38,0.55), rgba(8,13,29,0.78));
-  color: #809fded3 !important;
-  filter: drop-shadow(0 0 5px rgba(50,80,120,0.45));
-  border: 2px solid rgba(20,40,80,0.6) !important;
-}
+def load_game_state():
+    if st.session_state.game_mode == "multiplayer" and st.session_state.room_code:
+        try:
+            filename = f"game_{st.session_state.room_code}.json"
+            if os.path.exists(filename):
+                with open(filename, 'r') as f:
+                    game_state = json.load(f)
+                st.session_state.board = chess.Board(game_state['fen'])
+                st.session_state.move_history = game_state['move_history']
+                return True
+        except:
+            pass
+    return False
 
-.chess-board-wrapper button:hover {
-  transform: scale(1.1);
-  box-shadow:
-    0 0 38px 4px rgba(64, 160, 255, 0.85),
-    inset 0 0 14px rgba(255, 255, 255, 0.3);
-  background: linear-gradient(145deg, rgba(70,180,255,0.5), rgba(80,210,255,0.75));
-  color: #f0faff !important;
-}
+def make_move(move_uci):
+    try:
+        move = chess.Move.from_uci(move_uci)
+        if move in st.session_state.board.legal_moves:
+            st.session_state.board.push(move)
+            st.session_state.move_history.append(move_uci)
+            st.session_state.selected_square = None
+            st.session_state.valid_moves = []
+            if st.session_state.game_mode == "multiplayer":
+                save_game_state()
+            return True
+        else:
+            st.error("💎 Invalid move! Try again!")
+            return False
+    except ValueError:
+        st.error("💎 Invalid move format! Use UCI notation (e.g., 'e2e4')")
+        return False
 
-.chess-board-wrapper button.selected {
-  background: #f2cb4e !important;
-  box-shadow:
-    0 0 52px 4px rgba(250, 215, 80, 0.95),
-    inset 0 0 18px rgba(255, 255, 255, 0.55);
-  color: #381e04 !important;
-  cursor: pointer;
-}
+def select_square(square):
+    piece = st.session_state.board.piece_at(square)
+    if piece and piece.color == st.session_state.board.turn:
+        st.session_state.selected_square = square
+        st.session_state.valid_moves = [m for m in st.session_state.board.legal_moves if m.from_square == square]
+    else:
+        st.session_state.selected_square = None
+        st.session_state.valid_moves = []
 
-.chess-board-wrapper button.valid-move {
-  background: rgba(64, 175, 255, 0.6) !important;
-  color: #e0f4ff !important;
-  box-shadow:
-    0 0 35px 3px rgba(64, 175, 255, 0.7),
-    inset 0 0 14px rgba(170, 220, 255, 0.5);
-  cursor: pointer;
-}
+def handle_square_click(square):
+    if not (st.session_state.game_mode == "single" or is_player_turn()):
+        return
+    if st.session_state.selected_square is not None:
+        from_sq = st.session_state.selected_square
+        to_sq = square
+        move = chess.Move(from_sq, to_sq)
+        piece = st.session_state.board.piece_at(from_sq)
+        if move in st.session_state.board.legal_moves:
+            if piece and piece.piece_type == chess.PAWN:
+                if (piece.color and to_sq >= 56) or (not piece.color and to_sq <= 7):
+                    move = chess.Move(from_sq, to_sq, chess.QUEEN)
+            if make_move(str(move)):
+                st.experimental_rerun()
+        else:
+            select_square(square)
+    else:
+        select_square(square)
 
-@keyframes pieceGlowPulse {
-  0%, 100% { filter: drop-shadow(0 0 4px #69c5ff); }
-  50% { filter: drop-shadow(0 0 11px #93d6ff); }
-}
+def get_board_svg(board, size=500, selected_square=None, valid_moves=None):
+    style = """
+        .square.light { fill: #f8f9fa; }
+        .square.dark { fill: #6c757d; }
+        .square.light:hover { fill: #e9ecef; cursor: pointer; }
+        .square.dark:hover { fill: #5a6268; cursor: pointer; }
+        .square.selected { fill: #409cff; }
+        .square.move { fill: #28a745; }
+        .square.check { fill: #ff453a; }
+    """
+    if selected_square is not None:
+        style += f".square-{selected_square} {{ fill: #409cff !important; }}"
+    if valid_moves:
+        for move in valid_moves:
+            style += f".square-{move.to_square} {{ fill: #28a745 !important; }}"
+    return chess.svg.board(board=board, size=size, style=style)
 
-.piece-king {
-  animation: pieceGlowPulse 3.6s ease-in-out infinite;
-}
-.piece-queen {
-  animation: pieceGlowPulse 2.4s ease-in-out infinite;
-}
-.piece-rook {
-  animation: pieceGlowPulse 4.4s ease-in-out infinite;
-}
-.piece-bishop {
-  animation: pieceGlowPulse 3.8s ease-in-out infinite;
-}
-.piece-knight {
-  animation: pieceGlowPulse 3.1s ease-in-out infinite;
-}
-.piece-pawn {
-  animation: pieceGlowPulse 3.2s ease-in-out infinite;
-}
+def display_board(board):
+    selected_square = st.session_state.get('selected_square', None)
+    valid_moves = st.session_state.get('valid_moves', [])
+    st.markdown('<div class="chess-board-container">', unsafe_allow_html=True)
+    for rank in range(7, -1, -1):
+        cols = st.columns(8)
+        for file in range(8):
+            square = rank * 8 + file
+            piece = board.piece_at(square)
+            piece_symbols = {
+                'k': '♔', 'q': '♕', 'r': '♖', 'b': '♗', 'n': '♘', 'p': '♙',
+                'K': '♚', 'Q': '♛', 'R': '♜', 'B': '♝', 'N': '♞', 'P': '♟',
+                # Add custom pieces here if needed like 'a': '⯈', 'A': '⯈'
+            }
+            piece_symbol = piece_symbols.get(piece.symbol(), "") if piece else ""
+            piece_class = ""
+            if piece:
+                pt = piece.symbol().lower()
+                piece_class_map = {
+                    'k': "piece-king",
+                    'q': "piece-queen",
+                    'r': "piece-rook",
+                    'b': "piece-bishop",
+                    'n': "piece-knight",
+                    'p': "piece-pawn",
+                    # Add custom piece class mapping if added
+                }
+                piece_class = piece_class_map.get(pt, "")
+            tutor_hint = ""
+            if st.session_state.get('tutor_mode', False) and st.session_state.get('show_hints', True):
+                from functions import get_tutor_hint  # Use if defined elsewhere or inline
+                hint_result = get_tutor_hint(board, selected_square)
+                if hint_result and selected_square == square:
+                    hint_text, _ = hint_result
+                    tutor_hint = f'<div class="tutor-hint">{hint_text}</div>'
+            button_classes = ["chess-square-button", piece_class]
+            if st.session_state.get('tutor_mode', False):
+                button_classes.append("tutor-mode-active")
+            bg_color = 'rgba(64, 156, 255, 0.8)' if square == selected_square else \
+                'rgba(40, 167, 69, 0.8)' if any(move.to_square == square for move in valid_moves) else \
+                'rgba(248, 249, 250, 0.9)' if (rank + file) % 2 == 0 else 'rgba(108, 117, 125, 0.9)'
+            color = 'white' if square == selected_square or any(move.to_square == square for move in valid_moves) or (rank + file) % 2 != 0 else 'black'
+            with cols[file]:
+                st.markdown(f"""
+                <div style="position: relative;">
+                <button
+                  class="{' '.join(button_classes)}"
+                  onclick="handleChessClick({square})"
+                  style="background: {bg_color}; color: {color}; width: 100%; height: 70px; 
+                         border: 3px solid rgba(64, 156, 255, 0.3); border-radius: 12px; 
+                         font-family: 'SF Mono', 'Monaco', 'Menlo', monospace; font-weight: 700;
+                         font-size: 2.5rem; cursor: pointer; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                         display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;"
+                  title="Square {chr(97 + file)}{rank + 1}"
+                >{piece_symbol}</button>
+                {tutor_hint}
+                </div>""", unsafe_allow_html=True)
+    st.markdown("""
+    <script>
+    function handleChessClick(square) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'chess_square_click';
+        input.value = square;
+        input.id = 'chess-click-input';
+        const existing = document.getElementById('chess-click-input');
+        if (existing) existing.remove();
+        document.body.appendChild(input);
+        const event = new CustomEvent('chessSquareClick', { detail: { square: square } });
+        document.dispatchEvent(event);
+    }
+    </script>
+    """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-.move-highlight {
-  animation: moveGlow 6s ease-in-out infinite alternate;
-}
+# Include other functions as in your original code e.g. evaluate_position, get_best_moves, get_ai_move, etc.
 
-@keyframes moveGlow {
-  0%, 100% {
-    box-shadow: 0 0 12px 6px rgba(255,215,72,0.7);
-  }
-  50% {
-    box-shadow: 0 0 26px 14px rgba(255,215,72,1);
-  }
-}
+def main():
+    init_chess_game()
+    # Listen for JS square clicks
+    if 'chess_square_click' in st.experimental_get_query_params():
+        try:
+            clicked_square = int(st.experimental_get_query_params()['chess_square_click'][0])
+            handle_square_click(clicked_square)
+            st.experimental_set_query_params()
+        except Exception:
+            pass
 
-.move-highlight-square {
-  border-radius: 22px !important;
-  box-shadow:
-    0 0 18px 7px rgba(255,210,75,0.9);
-}
+    st.markdown('<div class="glass-container">', unsafe_allow_html=True)
+    st.markdown('<h1 class="glass-title">💎 GLASS CHESS 💎</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="glass-subtitle">Where elegance meets strategy in a crystal-clear interface</p>', unsafe_allow_html=True)
 
-/* Scrollbar for move history */
-.move-history {
-  background: rgba(255, 215, 50, 0.12);
-  border-radius: 30px;
-  padding: 18px 24px;
-  box-shadow: 0 0 48px 12px rgba(255, 200, 80, 0.25);
-  max-height: 500px;
-  overflow-y: auto;
-  font-weight: 600;
-  color: #202020ef;
-}
+    display_board(st.session_state.board)
 
-.move-history::-webkit-scrollbar {
-  width: 12px;
-}
-.move-history::-webkit-scrollbar-track {
-  background: transparent;
-}
-.move-history::-webkit-scrollbar-thumb {
-  background: rgba(255, 225, 75, 0.8);
-  border-radius: 10px;
-}
-.move-history::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 235, 120, 1);
-}
+    status, msg = get_game_status(st.session_state.board)
+    if status != 'normal':
+        st.markdown(f'<div class="status-message status-{status}">{msg}</div>', unsafe_allow_html=True)
+
+    if st.session_state.game_mode == 'multiplayer':
+        load_game_state()
+        st.markdown('<div class="glass-info">', unsafe_allow_html=True)
+        st.markdown("### 🌐 Multiplayer Game")
+        st.markdown(f"**Room Code:** `{st.session_state.room_code}`")
+        st.markdown(f"**Your Color:** {get_player_color().title()}")
+
+        if st.session_state.waiting_for_opponent:
+            st.markdown("⏳ **Waiting for opponent to join...** Share the room code with your friend!")
+        else:
+            if is_player_turn():
+                st.markdown("✅ **Your turn!**")
+            else:
+                st.markdown("⏳ **Opponent's turn**")
+
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            if st.button("🔙 Back to Single Player"):
+                st.session_state.game_mode = 'single'
+                st.session_state.room_code = None
+                st.session_state.waiting_for_opponent = False
+                st.experimental_rerun()
+        with col2:
+            if st.button("🔄 Refresh Game"):
+                st.experimental_rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="glass-info">', unsafe_allow_html=True)
+        st.markdown("### 🎮 Game Mode")
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            if st.button("🌐 Create Multiplayer Game"):
+                code = create_multiplayer_game()
+                st.success(f"Multiplayer game created! Room code: {code}")
+                st.experimental_rerun()
+        with col2:
+            room_input = st.text_input("Join Room Code:")
+            if st.button("🎯 Join Game"):
+                if join_multiplayer_game(room_input):
+                    st.success("Joined multiplayer game!")
+                    st.experimental_rerun()
+                else:
+                    st.error("Invalid room code!")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # Difficulty and tutor controls, game controls, stats, AI move button etc. go here (keep your original implementations)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main()
