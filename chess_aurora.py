@@ -1,233 +1,151 @@
 import streamlit as st
 import chess
 import time
-import random
-import os
-import json
 
-# Page configuration
-st.set_page_config(
-    page_title="💎 Glass Chess",
-    page_icon="💎",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+st.set_page_config(page_title="💎 Glass Chess Animated Pieces", page_icon="💎", layout="wide")
 
-# CSS with blue-only luxury hues (no yellow)
+# CSS: Transparent blue luxury pieces with animations inspired by Dr. Wolf
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&family=SF+Mono:wght@400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=SF+Mono&display=swap');
 
-    * {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .main, .stApp {
-        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
-        background-size: 400% 400%;
-        animation: glassGradient 12s ease infinite;
-        min-height: 100vh;
-        padding: 0;
-    }
-
-    @keyframes glassGradient {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
+    body, .stApp {
+        background: linear-gradient(135deg, #0a1227 0%, #152a70 50%, #0a1b5e 100%);
+        color: #e0eaff;
+        font-family: 'SF Mono', monospace, monospace;
     }
 
     .glass-container {
-        background: rgba(255,255,255,0.08);
-        backdrop-filter: blur(30px);
-        border-radius: 32px;
-        border: 1px solid rgba(255,255,255,0.12);
-        padding: 3rem;
-        margin: 2rem auto;
-        max-width: 1400px;
-        box-shadow:
-            0 8px 32px rgba(0,0,0,0.3),
-            0 0 0 1px rgba(255,255,255,0.05),
-            inset 0 1px 0 rgba(255,255,255,0.1);
+        background: rgba(20, 35, 70, 0.15);
+        border-radius: 28px;
+        padding: 2rem;
+        margin: 1rem auto;
+        max-width: 900px;
+        box-shadow: 0 8px 30px rgba(0, 90, 255, 0.4);
+        backdrop-filter: blur(28px);
+        -webkit-backdrop-filter: blur(28px);
         position: relative;
-        overflow: hidden;
-        animation: containerFloat 6s ease-in-out infinite;
-    }
-    @keyframes containerFloat {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-8px); }
-    }
-    .glass-container::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: linear-gradient(45deg, transparent 30%, rgba(64,156,255,0.05) 50%, transparent 70%);
-        animation: glassShimmer 4s ease-in-out infinite;
-        pointer-events: none;
-    }
-    @keyframes glassShimmer {
-        0%, 100% { transform: translateX(-100%); }
-        50% { transform: translateX(100%); }
-    }
-
-    .glass-title {
-        text-align: center;
-        color: #ffffff;
-        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-        font-weight: 700;
-        font-size: 3.5rem;
-        margin-bottom: 0.5rem;
-        text-shadow: 0 0 20px rgba(64,156,255,0.5);
-        animation: glassTitle 4s ease-in-out infinite alternate;
-        letter-spacing: -0.02em;
-        position: relative;
-    }
-    @keyframes glassTitle {
-        0% { 
-            text-shadow: 0 0 20px rgba(64,156,255,0.5);
-            transform: scale(1) rotateY(0deg);
-        }
-        100% { 
-            text-shadow: 0 0 30px rgba(64,190,255,0.8);
-            transform: scale(1.02) rotateY(2deg);
-        }
-    }
-
-    .glass-subtitle {
-        text-align: center;
-        color: rgba(255,255,255,0.8);
-        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-        font-weight: 400;
-        font-size: 1.2rem;
-        margin-bottom: 2.5rem;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        letter-spacing: 0.01em;
-        animation: subtitleGlow 5s ease-in-out infinite;
-    }
-    @keyframes subtitleGlow {
-        0%, 100% { opacity: 0.8; transform: translateY(0); }
-        50% { opacity: 1; transform: translateY(-2px); }
     }
 
     .chess-board-container {
+        display: grid;
+        grid-template-columns: repeat(8, 70px);
+        grid-template-rows: repeat(8, 70px);
+        gap: 5px;
+        justify-content: center;
+        margin: 2rem auto;
+        user-select: none;
+    }
+
+    .chess-square-button {
+        border-radius: 12px;
+        border: 3px solid rgba(64, 156, 255, 0.3);
+        font-family: 'SF Mono', monospace;
+        font-weight: 700;
+        font-size: 2.8rem;
+        background: rgba(64, 156, 255, 0.1);
+        color: rgba(255, 255, 255, 0.85);
         display: flex;
         justify-content: center;
-        margin: 2.5rem 0;
+        align-items: center;
+        cursor: pointer;
         position: relative;
-        animation: boardContainerPulse 8s ease-in-out infinite;
-    }
-    @keyframes boardContainerPulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.01); }
-    }
-
-    /* Chess square button styling - Blue luxury theme */
-    .chess-square-button {
-        border-radius: 12px !important;
-        border: 3px solid rgba(64,156,255,0.3) !important;
-        font-family: 'SF Mono', 'Monaco', 'Menlo', monospace !important;
-        font-weight: 700 !important;
-        font-size: 2rem !important;
-        transition: all 0.4s cubic-bezier(0.4,0,0.2,1) !important;
+        overflow: visible;
         box-shadow:
-            0 4px 16px rgba(64,156,255,0.3),
-            0 0 0 1px rgba(64,156,255,0.15),
-            inset 0 1px 0 rgba(255,255,255,0.25) !important;
-        min-height: 70px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        position: relative !important;
-        overflow: hidden !important;
-        background: linear-gradient(135deg,
-            rgba(64,156,255,0.1),
-            rgba(100,200,255,0.15),
-            rgba(64,156,255,0.1)) !important;
+            0 0 15px rgba(64, 156, 255, 0.3),
+            inset 0 0 8px rgba(64, 156, 255, 0.15);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        user-select: none;
+        animation: pieceGlint 6s ease-in-out infinite alternate;
     }
-    .chess-square-button::before {
-        content: '';
-        position: absolute;
-        top: -50%; left: -50%;
-        width: 200%; height: 200%;
-        background: radial-gradient(circle, rgba(64,156,255,0.1) 0%, transparent 70%);
-        animation: liquidFlow 3s ease-in-out infinite;
-        pointer-events: none;
-    }
-    @keyframes liquidFlow {
-        0%,100% { transform: translate(-50%, -50%) rotate(0deg); }
-        50% { transform: translate(-50%, -50%) rotate(180deg); }
-    }
+    /* Hover glow */
     .chess-square-button:hover {
-        transform: scale(1.05) translateY(-2px) !important;
+        color: #cce6ff;
         box-shadow:
-            0 8px 32px rgba(64,156,255,0.5),
-            0 0 0 2px rgba(64,156,255,0.4),
-            inset 0 1px 0 rgba(255,255,255,0.35) !important;
-        border-color: rgba(64,156,255,0.6) !important;
-        background: linear-gradient(135deg,
-            rgba(64,156,255,0.2),
-            rgba(100,200,255,0.25),
-            rgba(64,156,255,0.2)) !important;
-    }
-    .chess-square-button:active {
-        transform: scale(0.98) translateY(0px) !important;
-        animation: pieceClick 0.3s ease-out !important;
-    }
-    @keyframes pieceClick {
-        0% { transform: scale(1.05) translateY(-2px); }
-        50% { transform: scale(0.95) translateY(1px); }
-        100% { transform: scale(0.98) translateY(0px); }
+            0 0 30px rgba(64, 200, 255, 0.8),
+            inset 0 0 15px rgba(64, 200, 255, 0.45);
+        transform: scale(1.1);
+        z-index: 10;
     }
 
-    /* Selected square highlight - blue glow */
+    /* Selected square */
     .chess-square-button.selected {
-        background: rgba(0,120,255,0.85) !important;
-        border-color: rgba(0,100,255,0.95) !important;
+        background: rgba(0, 120, 255, 0.6);
         box-shadow:
-            0 0 20px rgba(0,120,255,1),
-            inset 0 1px 0 rgba(255,255,255,0.4) !important;
-        color: #d0eaff !important;
+            0 0 30px rgba(0, 140, 255, 1),
+            inset 0 0 20px rgba(64, 180, 255, 0.7);
+        color: #e0f4ff;
+        animation: selectedPulse 2.5s ease-in-out infinite;
     }
 
-    /* Valid move highlight - lighter blue */
+    /* Valid move highlight */
     .chess-square-button.valid-move {
-        background: rgba(0,150,255,0.6) !important;
-        border-color: rgba(0,140,255,0.85) !important;
+        background: rgba(0, 180, 255, 0.35);
         box-shadow:
-            0 0 15px rgba(0,180,255,0.8),
-            inset 0 1px 0 rgba(255,255,255,0.25) !important;
-        color: white !important;
+            0 0 18px rgba(0, 180, 255, 0.75);
+        color: white;
     }
 
-    /* Tutor hint styling with blue */
+    /* Subtle piece glow animation */
+    @keyframes pieceGlint {
+        0% {
+            text-shadow: 0 0 12px rgba(64, 156, 255, 0.5);
+            filter: brightness(1);
+        }
+        50% {
+            text-shadow: 0 0 20px rgba(64, 200, 255, 0.9);
+            filter: brightness(1.15);
+        }
+        100% {
+            text-shadow: 0 0 12px rgba(64, 156, 255, 0.5);
+            filter: brightness(1);
+        }
+    }
+
+    /* Selected square pulse glow */
+    @keyframes selectedPulse {
+        0%, 100% {
+            box-shadow:
+                0 0 30px rgba(0, 140, 255, 1),
+                inset 0 0 20px rgba(64, 180, 255, 0.7);
+        }
+        50% {
+            box-shadow:
+                0 0 45px rgba(0, 170, 255, 1),
+                inset 0 0 30px rgba(64, 220, 255, 0.9);
+        }
+    }
+
     .tutor-hint {
         position: absolute;
-        top: -25px;
+        top: -26px;
         left: 50%;
         transform: translateX(-50%);
-        background: rgba(64,156,255,0.95) !important;
-        color: #000e2b !important;
-        padding: 4px 8px;
-        border-radius: 8px;
-        font-size: 0.7rem;
+        background: rgba(64, 156, 255, 0.9);
+        color: #00152d;
+        padding: 3px 10px;
+        border-radius: 10px;
+        font-size: 0.75rem;
         font-weight: 600;
         white-space: nowrap;
-        z-index: 1000;
-        animation: hintFloat 2s ease-in-out infinite;
-        box-shadow: 0 0 25px rgba(64,156,255,0.8) !important;
+        pointer-events: none;
+        box-shadow: 0 0 20px rgba(64, 156, 255, 0.7);
+        animation: hintFloat 2.5s ease-in-out infinite;
+        user-select: none;
     }
+
     @keyframes hintFloat {
-        0%, 100% { transform: translateX(-50%) translateY(0px); }
-        50% { transform: translateX(-50%) translateY(-3px); }
+        0%, 100% { transform: translateX(-50%) translateY(0); }
+        50% { transform: translateX(-50%) translateY(-4px); }
     }
+
 </style>
 """, unsafe_allow_html=True)
 
+
 def init_chess_game():
-    # Initialize all needed session state variables with defaults
     if 'board' not in st.session_state:
         st.session_state.board = chess.Board()
-    if 'move_history' not in st.session_state:
-        st.session_state.move_history = []
     if 'selected_square' not in st.session_state:
         st.session_state.selected_square = None
     if 'valid_moves' not in st.session_state:
@@ -236,128 +154,127 @@ def init_chess_game():
         st.session_state.tutor_mode = True
     if 'show_hints' not in st.session_state:
         st.session_state.show_hints = True
-    if 'difficulty_level' not in st.session_state:
-        st.session_state.difficulty_level = "intermediate"
+
 
 def get_tutor_hint(board, selected_square):
-    # Your existing tutor hint logic here or None if none available
-    return None
+    if selected_square is None:
+        return None
+    piece = board.piece_at(selected_square)
+    if not piece or piece.color != board.turn:
+        return None
+    moves = [m for m in board.legal_moves if m.from_square == selected_square]
+    if not moves:
+        return None
+    return f"Try {board.san(moves[0])}", 0.8
+
 
 def display_board(board):
-    selected_square = st.session_state.get('selected_square', None)
+    selected_square = st.session_state.get('selected_square')
     valid_moves = st.session_state.get('valid_moves', [])
 
     st.markdown('<div class="chess-board-container">', unsafe_allow_html=True)
+    piece_symbols = {
+        'k': '♔', 'q': '♕', 'r': '♖', 'b': '♗', 'n': '♘', 'p': '♙',
+        'K': '♚', 'Q': '♛', 'R': '♜', 'B': '♝', 'N': '♞', 'P': '♟',
+    }
 
     for rank in range(7, -1, -1):
-        cols = st.columns(8)
         for file in range(8):
             square = rank * 8 + file
             piece = board.piece_at(square)
-
-            piece_symbols = {
-                'k': '♔', 'q': '♕', 'r': '♖',
-                'b': '♗', 'n': '♘', 'p': '♙',
-                'K': '♚', 'Q': '♛', 'R': '♜',
-                'B': '♝', 'N': '♞', 'P': '♟',
-            }
-            piece_symbol = piece_symbols.get(piece.symbol(), "") if piece else ""
-
-            piece_class = ""
-            if piece:
-                pt = piece.symbol().lower()
-                classes = {
-                    'k': "piece-king",
-                    'q': "piece-queen",
-                    'r': "piece-rook",
-                    'b': "piece-bishop",
-                    'n': "piece-knight",
-                    'p': "piece-pawn"
-                }
-                piece_class = classes.get(pt, "")
+            symbol = piece_symbols.get(piece.symbol(), "") if piece else ""
 
             tutor_hint = ""
-            if st.session_state.get('tutor_mode', False) and st.session_state.get('show_hints', True):
-                hint_result = get_tutor_hint(board, selected_square)
-                if hint_result and selected_square == square:
-                    hint_text, _ = hint_result
+            if st.session_state.get('tutor_mode') and st.session_state.get('show_hints'):
+                hint = get_tutor_hint(board, selected_square)
+                if hint and selected_square == square:
+                    hint_text, _ = hint
                     tutor_hint = f'<div class="tutor-hint">{hint_text}</div>'
 
-            button_classes = ["chess-square-button"]
-            if piece_class:
-                button_classes.append(piece_class)
-            if st.session_state.get('tutor_mode', False):
-                button_classes.append("tutor-mode-active")
+            class_names = ["chess-square-button"]
             if square == selected_square:
-                button_classes.append("selected")
+                class_names.append("selected")
             elif any(move.to_square == square for move in valid_moves):
-                button_classes.append("valid-move")
+                class_names.append("valid-move")
 
-            bg_color = (
-                'rgba(64,156,255,0.8)' if square == selected_square else
-                'rgba(40,167,69,0.8)' if any(move.to_square == square for move in valid_moves) else
-                'rgba(248,249,250,0.9)' if (rank + file) % 2 == 0 else
-                'rgba(108,117,125,0.9)'
-            )
-            color = (
-                'white' if square == selected_square or
-                any(move.to_square == square for move in valid_moves) or (rank + file) % 2 != 0 else
-                'black'
-            )
+            st.markdown(f"""
+            <div style="position:relative;">
+                <button class="{' '.join(class_names)}" 
+                    onclick="handleChessClick({square})"
+                    title="{chr(97+file)}{rank+1}" aria-label="Square {chr(97+file)}{rank+1}">
+                    {symbol}
+                </button>
+                {tutor_hint}
+            </div>
+            """, unsafe_allow_html=True)
 
-            with cols[file]:
-                st.markdown(f"""
-                <div style="position: relative;">
-                    <button 
-                        class="{' '.join(button_classes)}"
-                        onclick="handleChessClick({square})"
-                        style="background: {bg_color};
-                               color: {color};
-                               width: 100%; height: 70px;
-                               border: 3px solid rgba(64,156,255,0.3);
-                               border-radius: 12px;
-                               font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
-                               font-weight: 700;
-                               font-size: 2.5rem;
-                               cursor: pointer;
-                               transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                               display: flex;
-                               align-items: center;
-                               justify-content: center;
-                               position: relative;
-                               overflow: hidden;"
-                        title="Square {chr(97 + file)}{rank + 1}"
-                    >{piece_symbol}</button>
-                    {tutor_hint}
-                </div>
-                """, unsafe_allow_html=True)
     st.markdown("""
     <script>
     function handleChessClick(square) {
         const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'chess_square_click';
-        input.value = square;
-        input.id = 'chess-click-input';
+        input.type='hidden';
+        input.name='chess_square_click';
+        input.value=square;
+        input.id='chess-click-input';
         const existing = document.getElementById('chess-click-input');
         if(existing) existing.remove();
         document.body.appendChild(input);
-        const event = new CustomEvent('chessSquareClick', { detail: { square: square } });
+        const event = new CustomEvent('chessSquareClick', {detail:{square:square}});
         document.dispatchEvent(event);
     }
     </script>
     """, unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Initialize game state variables and additional game logic as needed...
+
+def select_square(square):
+    piece = st.session_state.board.piece_at(square)
+    if piece and piece.color == st.session_state.board.turn:
+        st.session_state.selected_square = square
+        st.session_state.valid_moves = [m for m in st.session_state.board.legal_moves if m.from_square == square]
+    else:
+        st.session_state.selected_square = None
+        st.session_state.valid_moves = []
+
+
+def make_move(from_sq, to_sq):
+    move = chess.Move(from_sq, to_sq)
+    if move in st.session_state.board.legal_moves:
+        st.session_state.board.push(move)
+        st.session_state.selected_square = None
+        st.session_state.valid_moves = []
+        return True
+    return False
+
+
+def handle_square_click():
+    if "chess_square_click" in st.experimental_get_query_params():
+        try:
+            clicked = int(st.experimental_get_query_params()["chess_square_click"][0])
+            selected = st.session_state.get('selected_square')
+            if selected is None:
+                select_square(clicked)
+            else:
+                if make_move(selected, clicked):
+                    st.experimental_rerun()
+                else:
+                    select_square(clicked)
+        except Exception:
+            pass
+
 
 def main():
     init_chess_game()
+    handle_square_click()
+
     st.markdown('<div class="glass-container">', unsafe_allow_html=True)
-    st.markdown('<h1 class="glass-title">💎 GLASS CHESS 💎</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="glass-subtitle">Where elegance meets strategy in a crystal-clear interface</p>', unsafe_allow_html=True)
+    st.markdown('<h1 class="glass-title">💎 GLASS CHESS Animated Transparent Pieces 💎</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="glass-subtitle">Interactive transparent glassy blue pieces with animations</p>', unsafe_allow_html=True)
+
     display_board(st.session_state.board)
+
     st.markdown('</div>', unsafe_allow_html=True)
+
 
 if __name__ == "__main__":
     main()
