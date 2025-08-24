@@ -1,10 +1,14 @@
 import streamlit as st
 import chess
-import time
 
-st.set_page_config(page_title="💎 Glass Chess Animated Pieces", page_icon="💎", layout="wide")
+st.set_page_config(
+    page_title="💎 Glass Chess Advanced",
+    page_icon="💎",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-# CSS: Transparent blue luxury pieces with animations inspired by Dr. Wolf
+# Full CSS for transparent glassy blue luxury chessboard and pieces with animations
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=SF+Mono&display=swap');
@@ -12,130 +16,117 @@ st.markdown("""
     body, .stApp {
         background: linear-gradient(135deg, #0a1227 0%, #152a70 50%, #0a1b5e 100%);
         color: #e0eaff;
-        font-family: 'SF Mono', monospace, monospace;
+        font-family: 'SF Mono', monospace;
+        user-select: none;
+        margin: 0;
+        padding: 0;
     }
 
     .glass-container {
-        background: rgba(20, 35, 70, 0.15);
-        border-radius: 28px;
-        padding: 2rem;
-        margin: 1rem auto;
-        max-width: 900px;
-        box-shadow: 0 8px 30px rgba(0, 90, 255, 0.4);
-        backdrop-filter: blur(28px);
-        -webkit-backdrop-filter: blur(28px);
-        position: relative;
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 30px;
+        background: rgba(20, 40, 80, 0.15);
+        border-radius: 32px;
+        box-shadow: 0 8px 40px rgba(0, 90, 255, 0.5);
+        backdrop-filter: blur(34px);
+        -webkit-backdrop-filter: blur(34px);
+    }
+
+    .glass-title {
+        text-align: center;
+        font-size: 3rem;
+        font-weight: 900;
+        color: #a0d8ff;
+        text-shadow: 0 0 20px rgba(64, 160, 255, 0.75);
+        margin-bottom: 20px;
+    }
+
+    .glass-subtitle {
+        text-align: center;
+        font-weight: 500;
+        font-size: 1.2rem;
+        margin-bottom: 40px;
+        color: #cce7ff;
+        text-shadow: 0 0 8px rgba(64, 160, 255, 0.5);
     }
 
     .chess-board-container {
         display: grid;
         grid-template-columns: repeat(8, 70px);
         grid-template-rows: repeat(8, 70px);
-        gap: 5px;
+        gap: 6px;
         justify-content: center;
-        margin: 2rem auto;
         user-select: none;
     }
 
     .chess-square-button {
-        border-radius: 12px;
-        border: 3px solid rgba(64, 156, 255, 0.3);
-        font-family: 'SF Mono', monospace;
-        font-weight: 700;
+        border-radius: 14px;
+        border: 3px solid rgba(64, 160, 255, 0.3);
+        background: rgba(64, 156, 255, 0.12);
+        color: rgba(230, 245, 255, 0.8);
         font-size: 2.8rem;
-        background: rgba(64, 156, 255, 0.1);
-        color: rgba(255, 255, 255, 0.85);
+        font-weight: 900;
+        font-family: 'SF Mono', monospace;
+        box-shadow: 
+            inset 0 0 18px rgba(64, 180, 255, 0.4),
+            0 0 14px rgba(64, 160, 255, 0.55);
         display: flex;
-        justify-content: center;
         align-items: center;
+        justify-content: center;
         cursor: pointer;
+        transition: all 0.3s ease;
         position: relative;
-        overflow: visible;
-        box-shadow:
-            0 0 15px rgba(64, 156, 255, 0.3),
-            inset 0 0 8px rgba(64, 156, 255, 0.15);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        text-shadow: 0 0 6px rgba(64, 200, 255, 0.7);
         user-select: none;
-        animation: pieceGlint 6s ease-in-out infinite alternate;
+        -webkit-user-select: none;
     }
-    /* Hover glow */
+
     .chess-square-button:hover {
-        color: #cce6ff;
-        box-shadow:
-            0 0 30px rgba(64, 200, 255, 0.8),
-            inset 0 0 15px rgba(64, 200, 255, 0.45);
-        transform: scale(1.1);
+        color: #ccecff;
+        box-shadow: 
+            inset 0 0 25px rgba(64, 210, 255, 0.7),
+            0 0 30px rgba(64, 210, 255, 1);
+        transform: scale(1.13);
         z-index: 10;
     }
 
-    /* Selected square */
     .chess-square-button.selected {
-        background: rgba(0, 120, 255, 0.6);
+        background: rgba(0, 140, 255, 0.5) !important;
         box-shadow:
-            0 0 30px rgba(0, 140, 255, 1),
-            inset 0 0 20px rgba(64, 180, 255, 0.7);
-        color: #e0f4ff;
-        animation: selectedPulse 2.5s ease-in-out infinite;
+            0 0 32px rgba(0, 140, 255, 1),
+            inset 0 0 24px rgba(64, 200, 255, 0.85);
+        color: #e0f7ff !important;
     }
 
-    /* Valid move highlight */
     .chess-square-button.valid-move {
-        background: rgba(0, 180, 255, 0.35);
+        background: rgba(0, 175, 255, 0.35) !important;
         box-shadow:
-            0 0 18px rgba(0, 180, 255, 0.75);
-        color: white;
-    }
-
-    /* Subtle piece glow animation */
-    @keyframes pieceGlint {
-        0% {
-            text-shadow: 0 0 12px rgba(64, 156, 255, 0.5);
-            filter: brightness(1);
-        }
-        50% {
-            text-shadow: 0 0 20px rgba(64, 200, 255, 0.9);
-            filter: brightness(1.15);
-        }
-        100% {
-            text-shadow: 0 0 12px rgba(64, 156, 255, 0.5);
-            filter: brightness(1);
-        }
-    }
-
-    /* Selected square pulse glow */
-    @keyframes selectedPulse {
-        0%, 100% {
-            box-shadow:
-                0 0 30px rgba(0, 140, 255, 1),
-                inset 0 0 20px rgba(64, 180, 255, 0.7);
-        }
-        50% {
-            box-shadow:
-                0 0 45px rgba(0, 170, 255, 1),
-                inset 0 0 30px rgba(64, 220, 255, 0.9);
-        }
+            0 0 22px rgba(0, 180, 255, 0.8);
+        color: white !important;
     }
 
     .tutor-hint {
         position: absolute;
-        top: -26px;
+        top: -28px;
         left: 50%;
         transform: translateX(-50%);
         background: rgba(64, 156, 255, 0.9);
         color: #00152d;
         padding: 3px 10px;
-        border-radius: 10px;
+        border-radius: 12px;
         font-size: 0.75rem;
-        font-weight: 600;
+        font-weight: 700;
         white-space: nowrap;
         pointer-events: none;
-        box-shadow: 0 0 20px rgba(64, 156, 255, 0.7);
-        animation: hintFloat 2.5s ease-in-out infinite;
+        box-shadow: 0 0 20px rgba(64, 156, 255, 0.8);
         user-select: none;
+        animation: hintFloat 2.5s ease-in-out infinite;
+        z-index: 99;
     }
 
     @keyframes hintFloat {
-        0%, 100% { transform: translateX(-50%) translateY(0); }
+        0%,100% { transform: translateX(-50%) translateY(0); }
         50% { transform: translateX(-50%) translateY(-4px); }
     }
 
@@ -165,7 +156,7 @@ def get_tutor_hint(board, selected_square):
     moves = [m for m in board.legal_moves if m.from_square == selected_square]
     if not moves:
         return None
-    return f"Try {board.san(moves[0])}", 0.8
+    return f"Best move: {board.san(moves[0])}", 0.85
 
 
 def display_board(board):
@@ -173,58 +164,60 @@ def display_board(board):
     valid_moves = st.session_state.get('valid_moves', [])
 
     st.markdown('<div class="chess-board-container">', unsafe_allow_html=True)
-    piece_symbols = {
+    symbols = {
         'k': '♔', 'q': '♕', 'r': '♖', 'b': '♗', 'n': '♘', 'p': '♙',
         'K': '♚', 'Q': '♛', 'R': '♜', 'B': '♝', 'N': '♞', 'P': '♟',
     }
 
     for rank in range(7, -1, -1):
         for file in range(8):
-            square = rank * 8 + file
+            square = rank*8 + file
             piece = board.piece_at(square)
-            symbol = piece_symbols.get(piece.symbol(), "") if piece else ""
+
+            symbol = symbols.get(piece.symbol(), "") if piece else ""
 
             tutor_hint = ""
-            if st.session_state.get('tutor_mode') and st.session_state.get('show_hints'):
-                hint = get_tutor_hint(board, selected_square)
-                if hint and selected_square == square:
-                    hint_text, _ = hint
+            if st.session_state.tutor_mode and st.session_state.show_hints:
+                hint_data = get_tutor_hint(board, selected_square)
+                if hint_data and selected_square == square:
+                    hint_text, _ = hint_data
                     tutor_hint = f'<div class="tutor-hint">{hint_text}</div>'
 
-            class_names = ["chess-square-button"]
+            classes = ["chess-square-button"]
             if square == selected_square:
-                class_names.append("selected")
+                classes.append("selected")
             elif any(move.to_square == square for move in valid_moves):
-                class_names.append("valid-move")
+                classes.append("valid-move")
 
             st.markdown(f"""
-            <div style="position:relative;">
-                <button class="{' '.join(class_names)}" 
-                    onclick="handleChessClick({square})"
-                    title="{chr(97+file)}{rank+1}" aria-label="Square {chr(97+file)}{rank+1}">
-                    {symbol}
-                </button>
-                {tutor_hint}
-            </div>
+                <div style="position: relative;">
+                    <button class="{' '.join(classes)}"
+                        onclick="handleChessClick({square})"
+                        title="{chr(97+file)}{rank+1}"
+                        aria-label="Square {chr(97+file)}{rank+1}">
+                        {symbol}
+                    </button>
+                    {tutor_hint}
+                </div>
             """, unsafe_allow_html=True)
 
     st.markdown("""
     <script>
     function handleChessClick(square) {
         const input = document.createElement('input');
-        input.type='hidden';
-        input.name='chess_square_click';
-        input.value=square;
-        input.id='chess-click-input';
+        input.type = 'hidden';
+        input.name = 'chess_square_click';
+        input.value = square;
+        input.id = 'chess-click-input';
         const existing = document.getElementById('chess-click-input');
         if(existing) existing.remove();
         document.body.appendChild(input);
-        const event = new CustomEvent('chessSquareClick', {detail:{square:square}});
+        const event = new CustomEvent('chessSquareClick', {detail: {square:square}});
         document.dispatchEvent(event);
     }
     </script>
     """, unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def select_square(square):
@@ -247,10 +240,11 @@ def make_move(from_sq, to_sq):
     return False
 
 
-def handle_square_click():
-    if "chess_square_click" in st.experimental_get_query_params():
+def handle_click():
+    param = st.experimental_get_query_params()
+    if "chess_square_click" in param:
         try:
-            clicked = int(st.experimental_get_query_params()["chess_square_click"][0])
+            clicked = int(param["chess_square_click"][0])
             selected = st.session_state.get('selected_square')
             if selected is None:
                 select_square(clicked)
@@ -265,15 +259,15 @@ def handle_square_click():
 
 def main():
     init_chess_game()
-    handle_square_click()
+    handle_click()
 
     st.markdown('<div class="glass-container">', unsafe_allow_html=True)
-    st.markdown('<h1 class="glass-title">💎 GLASS CHESS Animated Transparent Pieces 💎</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="glass-subtitle">Interactive transparent glassy blue pieces with animations</p>', unsafe_allow_html=True)
+    st.markdown('<h1 class="glass-title">💎 Glass Chess Advanced 💎</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="glass-subtitle">Interactive transparent glassy blue pieces with smooth animations</p>', unsafe_allow_html=True)
 
     display_board(st.session_state.board)
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
