@@ -20,7 +20,8 @@ with st.sidebar:
             st.session_state.board.pop()
     st.write("Current turn:", "White" if st.session_state.board.turn else "Black")
 
-# ---html_code = f"""
+-------------------------
+html_code = f"""
 <!DOCTYPE html>
 <html>
 <head>
@@ -53,62 +54,12 @@ with st.sidebar:
 </head>
 <body>
   <div id="board"></div>
-
-  <script>
-    var board = null
-    var game = new Chess('{st.session_state.board.fen()}')
-
-    function onDragStart (source, piece, position, orientation) {{
-      if (game.game_over()) return false
-      if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-          (game.turn() === 'b' && piece.search(/^w/) !== -1)) {{
-        return false
-      }}
-    }}
-
-    function onDrop (source, target) {{
-      var move = game.move({{ from: source, to: target, promotion: 'q' }})
-
-      if (move === null) return 'snapback'
-
-      // highlight the move
-      document.querySelectorAll('.square-55d63').forEach(sq => sq.classList.remove('highlight'))
-      document.querySelector('.square-' + source).classList.add('highlight')
-      document.querySelector('.square-' + target).classList.add('highlight')
-
-      // send updated FEN back
-      const fen = game.fen()
-      fetch('/update_fen', {{
-        method: 'POST',
-        headers: {{ 'Content-Type': 'application/json' }},
-        body: JSON.stringify({{fen: fen}})
-      }})
-    }}
-
-    function onSnapEnd () {{
-      board.position(game.fen())
-    }}
-
-    board = Chessboard('board', {{
-      draggable: true,
-      position: '{st.session_state.board.fen()}',
-      onDragStart: onDragStart,
-      onDrop: onDrop,
-      onSnapEnd: onSnapEnd,
-      pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{{piece}}.png',
-      moveSpeed: 'slow',
-      appearSpeed: 200,
-      snapSpeed: 150
-    }})
-  </script>
+  ...
 </body>
 </html>
 """
--------------------------
-# Chessboard.js + Animations
+ Chessboard.js + Animations
 # ----------------------------
-
-
 
 components.html(html_code, height=550)
 
