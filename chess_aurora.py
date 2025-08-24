@@ -1,29 +1,14 @@
 import streamlit as st
-import streamlit.components.v1 as components
 import chess
-import json
-import os
+import chess.svg
+import streamlit.components.v1 as components
 
-# ----------------------------
-# Core game state management
-# ----------------------------
+# Initialize board in session state
 if "board" not in st.session_state:
     st.session_state.board = chess.Board()
 
-# Sidebar controls
-with st.sidebar:
-    st.header("Game Controls")
-    if st.button("New Game"):
-        st.session_state.board.reset()
-    if st.button("Undo Move"):
-        if st.session_state.board.move_stack:
-            st.session_state.board.pop()
-    st.write("Current turn:", "White" if st.session_state.board.turn else "Black")
-
--------------------------
-
- Chessboard.js + Animations
-#html_code = f"""
+# Fancy HTML + CSS + JS Chessboard
+html_code = f"""
 <!DOCTYPE html>
 <html>
 <head>
@@ -31,26 +16,43 @@ with st.sidebar:
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard.js/1.0.0/js/chessboard.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.min.js"></script>
   <style>
-    body {{ background: radial-gradient(circle at center, #0f2027, #203a43, #2c5364); }}
+    body {{
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      font-family: 'Segoe UI', sans-serif;
+    }}
     #board {{
-      width: 500px;
+      width: 520px;
       margin: auto;
-      box-shadow: 0 0 25px rgba(0,255,255,0.6);
-      border-radius: 20px;
+      border-radius: 22px;
+      box-shadow: 0 0 40px rgba(0, 255, 255, 0.7), inset 0 0 30px rgba(0, 180, 255, 0.3);
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(15px);
+      padding: 12px;
     }}
     .square-55d63 {{
-      transition: background 0.3s ease;
+      transition: background 0.4s ease;
+      border-radius: 6px;
     }}
     .highlight {{
-      box-shadow: inset 0 0 20px cyan, 0 0 15px cyan;
+      box-shadow: inset 0 0 18px cyan, 0 0 20px cyan !important;
+      border-radius: 8px;
     }}
     .piece-417db {{
       filter: drop-shadow(0 0 8px cyan);
-      transition: transform 0.3s ease, filter 0.3s ease;
+      transition: transform 0.3s ease, filter 0.4s ease;
+    }}
+    .piece-417db:hover {{
+      transform: scale(1.1);
+      filter: drop-shadow(0 0 20px magenta);
     }}
     .piece-417db:active {{
-      transform: scale(1.1);
-      filter: drop-shadow(0 0 15px magenta);
+      transform: scale(1.2) rotate(5deg);
+      filter: drop-shadow(0 0 25px lime);
     }}
   </style>
 </head>
@@ -97,14 +99,6 @@ with st.sidebar:
 </body>
 </html>
 """
- ----------------------------
 
-components.html(html_code, height=550)
-
-# ----------------------------
-# Simple backend sync for moves
-# ----------------------------
-# In production, you’d hook this into Streamlit server endpoints or a file/DB.
-
-# For now, we just refresh state if needed
-st.write("FEN:", st.session_state.board.fen())
+# Render the board inside Streamlit
+components.html(html_code, height=600)
