@@ -8,7 +8,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Elegant blue glass theme CSS with animations for pieces and squares
+# CSS for glassy blue transparent chessboard and pieces with animations
 st.markdown("""
 <style>
   @import url('https://fonts.googleapis.com/css2?family=SF+Mono&display=swap');
@@ -18,13 +18,11 @@ st.markdown("""
       color: #e0eaff;
       font-family: 'SF Mono', monospace;
       user-select: none;
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
   }
 
   .glass-container {
-      max-width: 820px;
-      margin: 2rem auto;
+      max-width: 820px; margin: 2rem auto;
       padding: 30px;
       background: rgba(20, 40, 80, 0.15);
       border-radius: 32px;
@@ -79,7 +77,7 @@ st.markdown("""
       text-shadow: 0 0 6px rgba(64, 200, 255, 0.7);
       user-select: none;
       -webkit-user-select: none;
-    }
+  }
 
   .chess-square-button:hover {
       color: #ccecff;
@@ -131,6 +129,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+
 def init_chess_game():
     if 'board' not in st.session_state:
         st.session_state.board = chess.Board()
@@ -143,6 +142,7 @@ def init_chess_game():
     if 'show_hints' not in st.session_state:
         st.session_state.show_hints = True
 
+
 def get_tutor_hint(board, selected_square):
     if selected_square is None:
         return None
@@ -153,6 +153,7 @@ def get_tutor_hint(board, selected_square):
     if not moves:
         return None
     return f"Best move: {board.san(moves[0])}", 0.85
+
 
 def display_board(board):
     selected_square = st.session_state.get('selected_square')
@@ -215,6 +216,7 @@ def display_board(board):
 
     st.markdown("</div>", unsafe_allow_html=True)
 
+
 def select_square(square):
     piece = st.session_state.board.piece_at(square)
     if piece and piece.color == st.session_state.board.turn:
@@ -224,6 +226,7 @@ def select_square(square):
         st.session_state.selected_square = None
         st.session_state.valid_moves = []
 
+
 def make_move(from_sq, to_sq):
     move = chess.Move(from_sq, to_sq)
     if move in st.session_state.board.legal_moves:
@@ -232,6 +235,7 @@ def make_move(from_sq, to_sq):
         st.session_state.valid_moves = []
         return True
     return False
+
 
 def handle_click():
     param = st.experimental_get_query_params()
@@ -249,6 +253,7 @@ def handle_click():
         except Exception:
             pass
 
+
 def main():
     init_chess_game()
     handle_click()
@@ -260,6 +265,7 @@ def main():
     display_board(st.session_state.board)
 
     st.markdown("</div>", unsafe_allow_html=True)
+
 
 if __name__ == "__main__":
     main()
