@@ -1,15 +1,8 @@
 import streamlit as st
 import chess
-import chess.svg
-import base64
-from io import BytesIO
 import time
 import random
-import requests
-import re
-import os
 
-# Page configuration
 st.set_page_config(
     page_title="💎 Glass Chess",
     page_icon="💎",
@@ -17,179 +10,93 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- Glassy ICE theme: only blue, violet, silver hues, no orange/gold/warm colors ---
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&family=SF+Mono:wght@400;500;600&display=swap');
-
-    * { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);}
-    .main {
-        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
-        background-size: 400% 400%;
-        animation: glassGradient 12s ease infinite;
-        min-height: 100vh;
-        padding: 0;
-    }
-    @keyframes glassGradient {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-    .stApp {
-        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
-        background-size: 400% 400%;
-        animation: glassGradient 12s ease infinite;
-    }
-    .glass-container {
-        background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(30px);
-        -webkit-backdrop-filter: blur(30px);
-        border-radius: 32px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        padding: 3rem;
-        margin: 2rem auto;
-        max-width: 1400px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),0 0 0 1px rgba(255, 255, 255, 0.05),inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        position: relative;
-        overflow: hidden;
-        animation: containerFloat 6s ease-in-out infinite;
-    }
-    @keyframes containerFloat {
-        0%, 100% { transform: translateY(0px);}
-        50% { transform: translateY(-8px);}
-    }
-    .glass-title {
-        text-align: center;
-        color: #ffffff;
-        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-        font-weight: 700;
-        font-size: 3.5rem;
-        margin-bottom: 0.5rem;
-        text-shadow: 0 0 20px rgba(64, 156, 255, 0.5), 0 0 40px rgba(138, 43, 226, 0.3);
-        animation: glassTitle 4s ease-in-out infinite alternate;
-        letter-spacing: -0.02em;
-        position: relative;
-    }
-    .glass-title::after {
-        content: '';
-        position: absolute;
-        bottom: -10px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 0;
-        height: 2px;
-        background: linear-gradient(90deg, #409cff, #533483);
-        animation: titleUnderline 3s ease-in-out infinite;
-    }
-    @keyframes titleUnderline {
-        0%, 100% { width: 0; opacity: 0;}
-        50% { width: 200px; opacity: 1;}
-    }
-    @keyframes glassTitle {
-        0% {
-            text-shadow: 0 0 20px rgba(64, 156, 255, 0.5), 0 0 40px rgba(138, 43, 226, 0.3);
-            transform: scale(1) rotateY(0deg);
-        }
-        100% {
-            text-shadow: 0 0 30px rgba(138, 43, 226, 0.6), 0 0 50px rgba(64, 156, 255, 0.4);
-            transform: scale(1.02) rotateY(2deg);
-        }
-    }
-    .glass-subtitle {
-        text-align: center;
-        color: rgba(255, 255, 255, 0.8);
-        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-        font-weight: 400;
-        font-size: 1.2rem;
-        margin-bottom: 2.5rem;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        letter-spacing: 0.01em;
-        animation: subtitleGlow 5s ease-in-out infinite;
-    }
-    .chess-board-container {
-        display: flex;
-        justify-content: center;
-        margin: 2.5rem 0;
-        position: relative;
-        animation: boardContainerPulse 8s ease-in-out infinite;
-    }
-    /* All warm color backgrounds, borders, shadows = replaced with blue, violet, gray, white below (same for all other classes)!
-       ... FULL THEME PURGED & REPLACED (code truncated for brevity) ...
-    */
-    /* Only blue, violet, gray, white gradients are allowed from now on! Everything warm removed. */
-    /* Chess squares, hints, buttons, tutor modes, move-history, status-messages, etc., are all blue/violet/gray.
-       Example: */
-    .move-history {
-        background: rgba(64, 156, 255, 0.08);
-        border: 1px solid rgba(64, 156, 255, 0.15);
-        color: white;
-    }
-    .move-history::before {
-        background: linear-gradient(90deg, transparent, rgba(64,156,255,0.1), transparent);
-    }
-    .glass-button, .stButton > button {
-        background: linear-gradient(135deg, #409cff 0%, #533483 100%) !important;
-        border: none !important;
-        border-radius: 20px !important;
-        color: white !important;
-        box-shadow: 0 8px 24px rgba(64,156,255,0.3), 0 0 0 1px rgba(255,255,255,0.1) !important;
-    }
-    .glass-button:hover, .stButton > button:hover {
-        background: linear-gradient(135deg, #533483 0%, #409cff 100%) !important;
-        box-shadow: 0 15px 40px rgba(64,156,255,0.5), 0 0 0 1px rgba(255,255,255,0.2);
-    }
-    .drag-instructions {
-        background: rgba(64,156,255,0.08);
-        border: 1px solid rgba(64,156,255,0.15);
-        color: #409cff;
-    }
+.main, .stApp {
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
+    background-size: 400% 400%; min-height: 100vh; padding: 0;
+}
+.chess-board-container {display:flex;justify-content:center;margin:2.5rem 0;}
+.chess-square-button {
+    border-radius: 12px !important;
+    border: 2px solid #409cff !important;
+    font-family: 'SF Mono', monospace !important;
+    font-weight: 700 !important;
+    font-size: 2rem !important;
+    background: #132a47 !important;
+    min-height:70px; min-width:70px; color:white;
+}
+.chess-square-button.selected {background:#409cff !important;}
+.chess-square-button.move {background:#533483 !important;}
 </style>
 """, unsafe_allow_html=True)
 
-# ... The rest of your python code stays the same, since chess moves already work as described.
+def init_chess_game():
+    if "board" not in st.session_state:
+        st.session_state.board = chess.Board()
+    if "selected_square" not in st.session_state:
+        st.session_state.selected_square = None
+    if "valid_moves" not in st.session_state:
+        st.session_state.valid_moves = []
+    if "move_history" not in st.session_state:
+        st.session_state.move_history = []
 
-# If you want super clarity on square highlights, use this for move highlights:
-def get_board_svg(board, size=500, selected_square=None, valid_moves=None):
-    """Convert chess board to SVG with blue/violet theme and interactive squares"""
-    style = """
-        .square.light { fill: #f8f9fa; }
-        .square.dark { fill: #6c757d; }
-        .square.light:hover { fill: #e9ecef; cursor: pointer; }
-        .square.dark:hover { fill: #5a6268; cursor: pointer; }
-        .square.selected { fill: #409cff; }
-        .square.move { fill: #533483; }
-        .square.check { fill: #409cff; }
-    """
-    # Add selected square highlighting
-    if selected_square is not None:
-        style += f"""
-        .square-{selected_square} {{ fill: #409cff !important; }}
-        """
-    # Add valid move highlighting
-    if valid_moves:
-        for move in valid_moves:
-            style += f"""
-            .square-{move.to_square} {{ fill: #533483 !important; }}
-            """
-    svg_content = chess.svg.board(
-        board=board,
-        size=size,
-        style=style
-    )
-    return svg_content
+def display_board(board):
+    selected_square = st.session_state.selected_square
+    valid_moves = st.session_state.valid_moves
+    st.markdown('<div class="chess-board-container">', unsafe_allow_html=True)
+    for rank in range(7, -1, -1):
+        cols = st.columns(8)
+        for file in range(8):
+            square = rank*8 + file
+            piece = board.piece_at(square)
+            piece_symbols = {'k':'♔','q':'♕','r':'♖','b':'♗','n':'♘','p':'♙','K':'♚','Q':'♛','R':'♜','B':'♝','N':'♞','P':'♟'}
+            piece_symbol = piece_symbols.get(piece.symbol(),"") if piece else ""
+            is_selected = square == selected_square
+            is_valid = any(move.to_square == square for move in valid_moves)
+            btn_class = "chess-square-button"
+            if is_selected: btn_class += " selected"
+            elif is_valid: btn_class += " move"
+            if cols[file].button(piece_symbol or " ", key=f"{rank}_{file}", help=f"Square {chr(97+file)}{rank+1}"):
+                handle_square_click(square)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# -- All core logic, UI, controls remain unchanged from your original! --
-# -- All color-related references in creation of buttons, instructions panel, status, hints, etc., can simply use the new blue/violet/gray theme and their CSS classes as above. --
-# -- No warm color highlights remain anywhere. All piece moving/selection logic is already optimal for Streamlit. --
-# -- Piece moving: select (click on piece), select destination (click on square)--no doubleclick, no orange highlight, no confusion. Done. --
+def select_square(square):
+    piece = st.session_state.board.piece_at(square)
+    if piece and piece.color == st.session_state.board.turn:
+        st.session_state.selected_square = square
+        st.session_state.valid_moves = [move for move in st.session_state.board.legal_moves if move.from_square == square]
+    else:
+        st.session_state.selected_square = None
+        st.session_state.valid_moves = []
+
+def handle_square_click(square):
+    if st.session_state.selected_square is not None:
+        from_square = st.session_state.selected_square
+        to_square = square
+        move = chess.Move(from_square, to_square)
+        if move in st.session_state.board.legal_moves:
+            st.session_state.board.push(move)
+            st.session_state.move_history.append(str(move))
+            st.session_state.selected_square = None
+            st.session_state.valid_moves = []
+            st.rerun()
+        else:
+            select_square(square)
+    else:
+        select_square(square)
 
 def main():
     init_chess_game()
     st.markdown('<div class="glass-container">', unsafe_allow_html=True)
     st.markdown('<h1 class="glass-title">💎 GLASS CHESS 💎</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="glass-subtitle">Where elegance meets strategy in a crystal-clear interface</p>', unsafe_allow_html=True)
     display_board(st.session_state.board)
-    # ...and all other Streamlit logic as you wrote
+    st.markdown('</div>', unsafe_allow_html=True)
+    if st.button("New Game"):
+        st.session_state.board = chess.Board()
+        st.session_state.selected_square = None
+        st.session_state.valid_moves = []
+        st.session_state.move_history = []
 
 if __name__ == "__main__":
     main()
