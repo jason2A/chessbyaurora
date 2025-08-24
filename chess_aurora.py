@@ -3,8 +3,15 @@ import chess
 import time
 import random
 
-st.set_page_config(page_title="💎 Glass Chess Blue Elegance", page_icon="💎", layout="wide")
+# Page config
+st.set_page_config(
+    page_title="💎 Glass Chess Blue Elegance",
+    page_icon="💎",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
+# Blue Glass CSS with animations
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;700&display=swap');
@@ -34,9 +41,7 @@ body, .stApp {
     font-size: 4rem;
     font-weight: 700;
     color: #58a6ff;
-    text-shadow: 
-      0 0 30px #58a6ff, 
-      0 0 50px #79b4ff;
+    text-shadow: 0 0 30px #58a6ff, 0 0 50px #79b4ff;
     letter-spacing: -0.02em;
     margin-bottom: 1rem;
     animation: titleGlow 4s ease-in-out infinite alternate;
@@ -67,28 +72,25 @@ body, .stApp {
     grid-template-columns: repeat(8, 80px);
     grid-template-rows: repeat(8, 80px);
     justify-content: center;
-    margin: 1.5rem auto 3rem auto;
+    margin: 1.5rem auto 3rem;
     border-radius: 20px;
     box-shadow: 0 0 55px rgba(58,123,212,0.8);
     background: linear-gradient(135deg, #134ba8, #abcfff);
-    user-select:none;
+    user-select: none;
 }
 
+/* Squares */
 .square {
     width: 80px;
     height: 80px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 3.7rem;
-    font-weight: 700;
     border-radius: 14px;
-    color: #dbe9ff;
-    cursor: pointer;
     transition: background 0.4s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s ease;
     box-shadow: inset 0 0 3px 0 rgba(0,70, 210, 0.4);
     filter: drop-shadow(0 0 3px rgba(18,123,255,0.5));
-    user-select:none;
+    cursor: pointer;
 }
 
 .square.light {
@@ -99,6 +101,7 @@ body, .stApp {
 
 .square.dark {
     background: linear-gradient(145deg, #1a2e6c, #134874);
+    color: #dcefff98;
 }
 
 .square.selected {
@@ -120,7 +123,7 @@ body, .stApp {
     transition: transform 0.15s ease;
 }
 
-/* Piece floating animations */
+/* Chess piece animations */
 .piece-king { animation: kingFloat 4s ease-in-out infinite; }
 .piece-queen { animation: queenGlow 3s ease-in-out infinite; }
 .piece-rook { animation: rookPulse 2.5s ease-in-out infinite; }
@@ -168,6 +171,7 @@ body, .stApp {
     box-shadow: 0 0 25px 5px #4488ffcc;
     padding: 0.8rem 1.8rem !important;
     transition: all 0.3s ease !important;
+    user-select:none;
 }
 
 .stButton > button:hover {
@@ -209,16 +213,89 @@ body, .stApp {
     background: rgba(100,140,255,0.6);
     border-radius: 30px;
 }
-
 </style>
 """, unsafe_allow_html=True)
+
+
+def init_chess_game():
+    if 'board' not in st.session_state:
+        st.session_state.board = chess.Board()
+    if 'move_history' not in st.session_state:
+        st.session_state.move_history = []
+    if 'selected_square' not in st.session_state:
+        st.session_state.selected_square = None
+    if 'valid_moves' not in st.session_state:
+        st.session_state.valid_moves = []
+    if 'game_mode' not in st.session_state:
+        st.session_state.game_mode = "single"
+    if 'difficulty_level' not in st.session_state:
+        st.session_state.difficulty_level = "intermediate"
+    if 'ai_thinking_time' not in st.session_state:
+        st.session_state.ai_thinking_time = 2
+    if 'show_hints' not in st.session_state:
+        st.session_state.show_hints = True
+    if 'tutor_mode' not in st.session_state:
+        st.session_state.tutor_mode = True
+
+
+def make_move(move_uci):
+    try:
+        move = chess.Move.from_uci(move_uci)
+        if move in st.session_state.board.legal_moves:
+            st.session_state.board.push(move)
+            st.session_state.move_history.append(move_uci)
+            st.session_state.selected_square = None
+            st.session_state.valid_moves = []
+            return True
+    except:
+        pass
+    return False
+
+
+def select_square(square):
+    piece = st.session_state.board.piece_at(square)
+    if piece and piece.color == st.session_state.board.turn:
+        st.session_state.selected_square = square
+        st.session_state.valid_moves = [move for move in st.session_state.board.legal_moves if move.from_square == square]
+    else:
+        st.session_state.selected_square = None
+        st.session_state.valid_moves = []
+
+
+def handle_square_click():
+    if "chess_square_click" not in st.experimental_get_query_params():
+        return
+    square = int(st.experimental_get_query_params()["chess_square_click"][0])
+    current_time = time.time()
+
+    if st.session_state.selected_square is not None:
+        from_square = st.session_state.selected_square
+        to_square = square
+        move = chess.Move(from_square, to_square)
+
+        piece = st.session_state.board.piece_at(from_square)
+        if piece and piece.piece_type == chess.PAWN:
+            if (piece.color and to_square >= 56) or (not piece.color and to_square <= 7):
+                move = chess.Move(from_square, to_square, promotion=chess.QUEEN)
+
+        if move in st.session_state.board.legal_moves:
+            if make_move(str(move)):
+                st.experimental_set_query_params()
+                st.experimental_rerun()
+        else:
+            select_square(square)
+            st.experimental_set_query_params()
+            st.experimental_rerun()
+    else:
+        select_square(square)
+        st.experimental_set_query_params()
+        st.experimental_rerun()
 
 def display_board(board):
     selected_square = st.session_state.get("selected_square", None)
     valid_moves = st.session_state.get("valid_moves", [])
 
     st.markdown('<div class="chess-board-container">', unsafe_allow_html=True)
-
     for rank in range(7, -1, -1):
         for file in range(8):
             square = rank * 8 + file
@@ -241,36 +318,68 @@ def display_board(board):
                 piece_symbol = piece_symbols.get(piece.symbol(), piece.symbol())
                 piece_class = f"piece-{piece.symbol().lower()}"
 
-            style = f"width: 100%; height: 80px; font-size: 3.7rem; color: {'#5746be' if piece and piece.color else 'rgb(124 137 237)'}; user-select:none;"
+            color_style = "color:#dcefff;" if piece and piece.color else "color:#4b6ec8;"
 
-            btn_html = f"""
-            <div class="{' '.join(classes)}" style="position:relative;">
-                <button 
-                    style="{style} border:none; background:none; outline:none; cursor:pointer;" 
-                    onclick="handleChessClick({square})" 
-                    title="{chr(97 + file)}{rank +1}">
-                    <span class="{piece_class}">{piece_symbol}</span>
-                </button>
+            square_html = f"""
+            <div class="{' '.join(classes)}">
+              <button 
+                style="all:unset;cursor:pointer;width:100%;height:100%;font-size:3.7rem;{color_style}" 
+                onclick="handleChessClick({square})" 
+                title="{chr(97 + file)}{rank + 1}">
+                <span class="{piece_class}">{piece_symbol}</span>
+              </button>
             </div>"""
 
-            st.markdown(btn_html, unsafe_allow_html=True)
+            st.markdown(square_html, unsafe_allow_html=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Javascript for seamless clicks
     st.markdown("""
-        <script>
-        function handleChessClick(square) {
-            const eInput = document.createElement('input');
-            eInput.type = 'hidden';
-            eInput.name = 'chess_square_click';
-            eInput.value = square;
-            eInput.id = 'chess-click-input';
-            if (document.getElementById('chess-click-input'))
-                document.getElementById('chess-click-input').remove();
-            document.body.appendChild(eInput);
-            const event = new CustomEvent('chessSquareClick', { detail: { square: square } });
-            document.dispatchEvent(event);
-        }
-        </script>
+    <script>
+    function handleChessClick(square) {
+        const eInput = document.getElementById('chess-click-input');
+        if (eInput) eInput.remove();
+        let input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'chess_square_click';
+        input.value = square;
+        input.id = 'chess-click-input';
+        document.body.appendChild(input);
+        const event = new CustomEvent('chessSquareClick', {detail:{square: square}});
+        document.dispatchEvent(event);
+    }
+    </script>
     """, unsafe_allow_html=True)
+
+def get_game_status(board):
+    if board.is_checkmate():
+        return "checkmate", "💎 CHECKMATE! The game is over! 💎"
+    elif board.is_stalemate():
+        return "stalemate", "⚖️ STALEMATE! The game is a draw! ⚖️"
+    elif board.is_insufficient_material():
+        return "stalemate", "⚖️ Insufficient material! Draw! ⚖️"
+    elif board.is_check():
+        return "check", "⚡ CHECK! Your king is in danger! ⚡"
+    else:
+        return "normal", "💎 Game in progress 💎"
+
+def main():
+    init_chess_game()
+    handle_square_click()
+
+    st.markdown('<div class="glass-container">', unsafe_allow_html=True)
+    st.markdown('<h1 class="glass-title">💎 GLASS CHESS 💎</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="glass-subtitle">Where elegance meets strategy in a crystal-clear interface</p>', unsafe_allow_html=True)
+
+    display_board(st.session_state.board)
+
+    status, message = get_game_status(st.session_state.board)
+    if status != "normal":
+        st.markdown(f'<div class="status-message status-{status}">{message}</div>', unsafe_allow_html=True)
+
+    # Include your other UI elements: game controls, multiplayer, AI, stats, etc., here
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main()
