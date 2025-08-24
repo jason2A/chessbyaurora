@@ -20,11 +20,7 @@ with st.sidebar:
             st.session_state.board.pop()
     st.write("Current turn:", "White" if st.session_state.board.turn else "Black")
 
-# ----------------------------
-# Chessboard.js + Animations
-# ----------------------------
-
-html_code = f"""
+# ---html_code = f"""
 <!DOCTYPE html>
 <html>
 <head>
@@ -62,16 +58,16 @@ html_code = f"""
     var board = null
     var game = new Chess('{st.session_state.board.fen()}')
 
-    function onDragStart (source, piece, position, orientation) {
+    function onDragStart (source, piece, position, orientation) {{
       if (game.game_over()) return false
       if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-          (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+          (game.turn() === 'b' && piece.search(/^w/) !== -1)) {{
         return false
-      }
-    }
+      }}
+    }}
 
-    function onDrop (source, target) {
-      var move = game.move({ from: source, to: target, promotion: 'q' })
+    function onDrop (source, target) {{
+      var move = game.move({{ from: source, to: target, promotion: 'q' }})
 
       if (move === null) return 'snapback'
 
@@ -87,11 +83,11 @@ html_code = f"""
         headers: {{ 'Content-Type': 'application/json' }},
         body: JSON.stringify({{fen: fen}})
       }})
-    }
+    }}
 
-    function onSnapEnd () {
+    function onSnapEnd () {{
       board.position(game.fen())
-    }
+    }}
 
     board = Chessboard('board', {{
       draggable: true,
@@ -99,7 +95,7 @@ html_code = f"""
       onDragStart: onDragStart,
       onDrop: onDrop,
       onSnapEnd: onSnapEnd,
-      pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+      pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{{piece}}.png',
       moveSpeed: 'slow',
       appearSpeed: 200,
       snapSpeed: 150
@@ -108,6 +104,11 @@ html_code = f"""
 </body>
 </html>
 """
+-------------------------
+# Chessboard.js + Animations
+# ----------------------------
+
+
 
 components.html(html_code, height=550)
 
