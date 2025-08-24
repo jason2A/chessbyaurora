@@ -8,131 +8,128 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Full CSS for transparent glassy blue luxury chessboard and pieces with animations
+# Elegant blue glass theme CSS with animations for pieces and squares
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=SF+Mono&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=SF+Mono&display=swap');
 
-    body, .stApp {
-        background: linear-gradient(135deg, #0a1227 0%, #152a70 50%, #0a1b5e 100%);
-        color: #e0eaff;
-        font-family: 'SF Mono', monospace;
-        user-select: none;
-        margin: 0;
-        padding: 0;
+  body, .stApp {
+      background: linear-gradient(135deg, #0a1227 0%, #152a70 50%, #0a1b5e 100%);
+      color: #e0eaff;
+      font-family: 'SF Mono', monospace;
+      user-select: none;
+      margin: 0;
+      padding: 0;
+  }
+
+  .glass-container {
+      max-width: 820px;
+      margin: 2rem auto;
+      padding: 30px;
+      background: rgba(20, 40, 80, 0.15);
+      border-radius: 32px;
+      box-shadow: 0 8px 40px rgba(0, 90, 255, 0.5);
+      backdrop-filter: blur(34px);
+      -webkit-backdrop-filter: blur(34px);
+  }
+
+  .glass-title {
+      text-align: center;
+      font-size: 3rem;
+      font-weight: 900;
+      color: #a0d8ff;
+      text-shadow: 0 0 20px rgba(64, 160, 255, 0.75);
+      margin-bottom: 20px;
+  }
+
+  .glass-subtitle {
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin-bottom: 40px;
+      color: #cce7ff;
+      text-shadow: 0 0 8px rgba(64, 160, 255, 0.5);
+  }
+
+  .chess-board-container {
+      display: grid;
+      grid-template-columns: repeat(8, 70px);
+      grid-template-rows: repeat(8, 70px);
+      gap: 6px;
+      justify-content: center;
+  }
+
+  .chess-square-button {
+      border-radius: 14px;
+      border: 3px solid rgba(64, 160, 255, 0.3);
+      background: rgba(64, 156, 255, 0.12);
+      color: rgba(230, 245, 255, 0.8);
+      font-size: 2.8rem;
+      font-weight: 900;
+      font-family: 'SF Mono', monospace;
+      box-shadow:
+          inset 0 0 18px rgba(64, 180, 255, 0.4),
+          0 0 14px rgba(64, 160, 255, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      text-shadow: 0 0 6px rgba(64, 200, 255, 0.7);
+      user-select: none;
+      -webkit-user-select: none;
     }
 
-    .glass-container {
-        max-width: 800px;
-        margin: 2rem auto;
-        padding: 30px;
-        background: rgba(20, 40, 80, 0.15);
-        border-radius: 32px;
-        box-shadow: 0 8px 40px rgba(0, 90, 255, 0.5);
-        backdrop-filter: blur(34px);
-        -webkit-backdrop-filter: blur(34px);
-    }
+  .chess-square-button:hover {
+      color: #ccecff;
+      box-shadow:
+          inset 0 0 25px rgba(64, 210, 255, 0.7),
+          0 0 30px rgba(64, 210, 255, 1);
+      transform: scale(1.13);
+      z-index: 10;
+  }
 
-    .glass-title {
-        text-align: center;
-        font-size: 3rem;
-        font-weight: 900;
-        color: #a0d8ff;
-        text-shadow: 0 0 20px rgba(64, 160, 255, 0.75);
-        margin-bottom: 20px;
-    }
+  .chess-square-button.selected {
+      background: rgba(0, 140, 255, 0.5) !important;
+      box-shadow:
+          0 0 32px rgba(0, 140, 255, 1),
+          inset 0 0 24px rgba(64, 200, 255, 0.85);
+      color: #e0f7ff !important;
+  }
 
-    .glass-subtitle {
-        text-align: center;
-        font-weight: 500;
-        font-size: 1.2rem;
-        margin-bottom: 40px;
-        color: #cce7ff;
-        text-shadow: 0 0 8px rgba(64, 160, 255, 0.5);
-    }
+  .chess-square-button.valid-move {
+      background: rgba(0, 175, 255, 0.35) !important;
+      box-shadow:
+          0 0 22px rgba(0, 180, 255, 0.8);
+      color: white !important;
+  }
 
-    .chess-board-container {
-        display: grid;
-        grid-template-columns: repeat(8, 70px);
-        grid-template-rows: repeat(8, 70px);
-        gap: 6px;
-        justify-content: center;
-        user-select: none;
-    }
+  .tutor-hint {
+      position: absolute;
+      top: -28px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(64, 156, 255, 0.9);
+      color: #00152d;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      white-space: nowrap;
+      pointer-events: none;
+      box-shadow: 0 0 20px rgba(64, 156, 255, 0.8);
+      user-select: none;
+      animation: hintFloat 2.5s ease-in-out infinite;
+      z-index: 99;
+  }
 
-    .chess-square-button {
-        border-radius: 14px;
-        border: 3px solid rgba(64, 160, 255, 0.3);
-        background: rgba(64, 156, 255, 0.12);
-        color: rgba(230, 245, 255, 0.8);
-        font-size: 2.8rem;
-        font-weight: 900;
-        font-family: 'SF Mono', monospace;
-        box-shadow: 
-            inset 0 0 18px rgba(64, 180, 255, 0.4),
-            0 0 14px rgba(64, 160, 255, 0.55);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        position: relative;
-        text-shadow: 0 0 6px rgba(64, 200, 255, 0.7);
-        user-select: none;
-        -webkit-user-select: none;
-    }
-
-    .chess-square-button:hover {
-        color: #ccecff;
-        box-shadow: 
-            inset 0 0 25px rgba(64, 210, 255, 0.7),
-            0 0 30px rgba(64, 210, 255, 1);
-        transform: scale(1.13);
-        z-index: 10;
-    }
-
-    .chess-square-button.selected {
-        background: rgba(0, 140, 255, 0.5) !important;
-        box-shadow:
-            0 0 32px rgba(0, 140, 255, 1),
-            inset 0 0 24px rgba(64, 200, 255, 0.85);
-        color: #e0f7ff !important;
-    }
-
-    .chess-square-button.valid-move {
-        background: rgba(0, 175, 255, 0.35) !important;
-        box-shadow:
-            0 0 22px rgba(0, 180, 255, 0.8);
-        color: white !important;
-    }
-
-    .tutor-hint {
-        position: absolute;
-        top: -28px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(64, 156, 255, 0.9);
-        color: #00152d;
-        padding: 3px 10px;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        white-space: nowrap;
-        pointer-events: none;
-        box-shadow: 0 0 20px rgba(64, 156, 255, 0.8);
-        user-select: none;
-        animation: hintFloat 2.5s ease-in-out infinite;
-        z-index: 99;
-    }
-
-    @keyframes hintFloat {
-        0%,100% { transform: translateX(-50%) translateY(0); }
-        50% { transform: translateX(-50%) translateY(-4px); }
-    }
-
+  @keyframes hintFloat {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(-4px); }
+  }
 </style>
 """, unsafe_allow_html=True)
-
 
 def init_chess_game():
     if 'board' not in st.session_state:
@@ -146,7 +143,6 @@ def init_chess_game():
     if 'show_hints' not in st.session_state:
         st.session_state.show_hints = True
 
-
 def get_tutor_hint(board, selected_square):
     if selected_square is None:
         return None
@@ -158,12 +154,12 @@ def get_tutor_hint(board, selected_square):
         return None
     return f"Best move: {board.san(moves[0])}", 0.85
 
-
 def display_board(board):
     selected_square = st.session_state.get('selected_square')
     valid_moves = st.session_state.get('valid_moves', [])
 
     st.markdown('<div class="chess-board-container">', unsafe_allow_html=True)
+
     symbols = {
         'k': '♔', 'q': '♕', 'r': '♖', 'b': '♗', 'n': '♘', 'p': '♙',
         'K': '♚', 'Q': '♛', 'R': '♜', 'B': '♝', 'N': '♞', 'P': '♟',
@@ -173,14 +169,13 @@ def display_board(board):
         for file in range(8):
             square = rank*8 + file
             piece = board.piece_at(square)
-
             symbol = symbols.get(piece.symbol(), "") if piece else ""
 
             tutor_hint = ""
             if st.session_state.tutor_mode and st.session_state.show_hints:
-                hint_data = get_tutor_hint(board, selected_square)
-                if hint_data and selected_square == square:
-                    hint_text, _ = hint_data
+                hint = get_tutor_hint(board, selected_square)
+                if hint and selected_square == square:
+                    hint_text, _ = hint
                     tutor_hint = f'<div class="tutor-hint">{hint_text}</div>'
 
             classes = ["chess-square-button"]
@@ -217,8 +212,8 @@ def display_board(board):
     }
     </script>
     """, unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
 
+    st.markdown("</div>", unsafe_allow_html=True)
 
 def select_square(square):
     piece = st.session_state.board.piece_at(square)
@@ -229,7 +224,6 @@ def select_square(square):
         st.session_state.selected_square = None
         st.session_state.valid_moves = []
 
-
 def make_move(from_sq, to_sq):
     move = chess.Move(from_sq, to_sq)
     if move in st.session_state.board.legal_moves:
@@ -238,7 +232,6 @@ def make_move(from_sq, to_sq):
         st.session_state.valid_moves = []
         return True
     return False
-
 
 def handle_click():
     param = st.experimental_get_query_params()
@@ -256,7 +249,6 @@ def handle_click():
         except Exception:
             pass
 
-
 def main():
     init_chess_game()
     handle_click()
@@ -268,7 +260,6 @@ def main():
     display_board(st.session_state.board)
 
     st.markdown("</div>", unsafe_allow_html=True)
-
 
 if __name__ == "__main__":
     main()
