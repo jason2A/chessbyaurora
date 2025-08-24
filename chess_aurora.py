@@ -1,13 +1,12 @@
 import streamlit as st
 import chess
-import chess.svg
 import streamlit.components.v1 as components
 
 # Initialize board in session state
 if "board" not in st.session_state:
     st.session_state.board = chess.Board()
 
-# Fancy HTML + CSS + JS Chessboard
+# Proper HTML Chessboard
 html_code = f"""
 <!DOCTYPE html>
 <html>
@@ -27,15 +26,14 @@ html_code = f"""
     }}
     #board {{
       width: 520px;
-      margin: auto;
       border-radius: 22px;
       box-shadow: 0 0 40px rgba(0, 255, 255, 0.7), inset 0 0 30px rgba(0, 180, 255, 0.3);
-      background: rgba(255,255,255,0.05);
+      background: rgba(255,255,255,0.08);
       backdrop-filter: blur(15px);
       padding: 12px;
     }}
     .square-55d63 {{
-      transition: background 0.4s ease;
+      transition: background 0.3s ease;
       border-radius: 6px;
     }}
     .highlight {{
@@ -60,8 +58,18 @@ html_code = f"""
   <div id="board"></div>
 
   <script>
-    var board = null
     var game = new Chess('{st.session_state.board.fen()}')
+    var board = Chessboard('board', {{
+      draggable: true,
+      position: '{st.session_state.board.fen()}',
+      pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{{piece}}.png',
+      moveSpeed: 'slow',
+      appearSpeed: 200,
+      snapSpeed: 150,
+      onDragStart: onDragStart,
+      onDrop: onDrop,
+      onSnapEnd: onSnapEnd
+    }})
 
     function onDragStart (source, piece, position, orientation) {{
       if (game.game_over()) return false
@@ -74,7 +82,6 @@ html_code = f"""
     function onDrop (source, target) {{
       var move = game.move({{ from: source, to: target, promotion: 'q' }})
       if (move === null) return 'snapback'
-
       document.querySelectorAll('.square-55d63').forEach(sq => sq.classList.remove('highlight'))
       document.querySelector('.square-' + source).classList.add('highlight')
       document.querySelector('.square-' + target).classList.add('highlight')
@@ -83,22 +90,9 @@ html_code = f"""
     function onSnapEnd () {{
       board.position(game.fen())
     }}
-
-    board = Chessboard('board', {{
-      draggable: true,
-      position: '{st.session_state.board.fen()}',
-      onDragStart: onDragStart,
-      onDrop: onDrop,
-      onSnapEnd: onSnapEnd,
-      pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{{piece}}.png',
-      moveSpeed: 'slow',
-      appearSpeed: 200,
-      snapSpeed: 150
-    }})
   </script>
 </body>
 </html>
 """
 
-# Render the board inside Streamlit
-components.html(html_code, height=600)
+components.html(html_code, height=650)
