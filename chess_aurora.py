@@ -1,424 +1,253 @@
 import streamlit as st
 import chess
-import random
 import time
-import json
+import random
 import os
+import json
 
-# Page setup
-st.set_page_config(page_title="💎 Glass Chess Velvet Multiplayer", layout="wide", page_icon="💎")
+# Page configuration
+st.set_page_config(
+    page_title="💎 Glass Chess",
+    page_icon="💎",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-# Modern glass velvet style CSS with blue highlights and glowing pieces
+# CSS for glass theme and piece animations (shortened for brevity, use your full CSS)
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display&family=SF+Mono&display=swap');
-:root {
-  --blue-light: #409CFF;
-  --blue-velvet: #162A58;
-  --gold-highlight: #FFD700;
-  --red-highlight: #FF453A;
-}
-
-body, .stApp, .main {
-  background: linear-gradient(135deg, var(--blue-velvet), #101F4A);
-  background-size: 400% 400%;
-  animation: velvetGradient 20s ease infinite;
-  font-family: 'SF Pro Display', -apple-system, sans-serif;
-  color: #ddd;
-}
-
-@keyframes velvetGradient {
-  0%, 100% {background-position: 0% 50%;}
-  50% {background-position: 100% 50%;}
-}
-
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;700&family=SF+Mono&display=swap');
+* { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 .glass-container {
-  background: rgba(16, 25, 74, 0.85);
-  border-radius: 32px;
-  border: 1px solid rgba(50, 65, 120, 0.8);
-  box-shadow: 0 15px 30px rgba(16, 25, 74, 0.85);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  padding: 2.5rem;
-  max-width: 1100px;
-  margin: 2rem auto;
-  animation: floatPane 8s ease-in-out infinite;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(30px);
+    border-radius: 32px;
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 3rem;
+    margin: 2rem auto;
+    max-width: 1400px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3),
+                0 0 0 1px rgba(255,255,255,0.05),
+                inset 0 1px 0 rgba(255,255,255,0.1);
+    position: relative;
+    overflow: hidden;
+    animation: containerFloat 6s ease-in-out infinite;
 }
-
-@keyframes floatPane {
-  0%, 100% {transform: translateY(0);}
-  50% {transform: translateY(-6px);}
+@keyframes containerFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
 }
-
-h1, h2 {
-  text-align: center;
-  color: white;
-  font-weight: 800;
-  filter: drop-shadow(0 0 3px var(--blue-light));
-  letter-spacing: -0.03em;
-  margin-bottom: 0.1rem;
+.chess-board-container {
+    display: flex;
+    justify-content: center;
+    margin: 2.5rem 0;
+    position: relative;
+    animation: boardContainerPulse 8s ease-in-out infinite;
 }
-
-h1 {
-  font-size: 3.8rem;
-  text-shadow: 0 0 15px var(--blue-light), 0 0 25px var(--gold-highlight), 0 0 35px var(--red-highlight);
-  animation: titleGlow 10s ease-in-out infinite alternate;
+@keyframes boardContainerPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.01); }
 }
-
-@keyframes titleGlow {
-  0%{ text-shadow: 0 0 8px var(--blue-light), 0 0 18px var(--gold-highlight); }
-  100%{ text-shadow: 0 0 21px var(--blue-light), 0 0 41px var(--gold-highlight), 0 0 51px var(--red-highlight);}
-}
-
-h2.subtitle {
-  font-weight: 400;
-  color: #cdd6f4cc;
-  margin-top: -12px;
-  margin-bottom: 2rem;
-  font-size: 1.3rem;
-  letter-spacing: 0.02em;
-  filter: drop-shadow(0 0 2px var(--blue-light));
-  animation: subtGlow 10s ease-in-out infinite alternate;
-}
-
-@keyframes subtGlow {
-  0%, 100% {opacity: 0.7;}
-  50% {opacity: 1;}
-}
-
-.chessboard {
-  display: grid;
-  grid-template-columns: repeat(8, minmax(64px, 1fr));
-  grid-template-rows: repeat(8, 64px);
-  gap: 2px;
-  max-width: 512px;
-  margin: auto;
-  border-radius: 14px;
-  box-shadow: inset 0 0 12px var(--blue-light), 0 0 16px var(--blue-light);
-  background: linear-gradient(135deg, #14284a, #203e7a);
-  user-select: none;
-  overflow: hidden;
-  animation: boardGlow 8s ease-in-out infinite alternate;
-}
-
-@keyframes boardGlow {
-  0%, 100% {box-shadow: inset 0 0 12px var(--blue-light), 0 0 18px var(--blue-light);}
-  50% {box-shadow: inset 0 0 22px var(--blue-light), 0 0 28px var(--gold-highlight);}
-}
-
-.square {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 36px;
-  cursor: pointer;
-  font-weight: 900;
-  font-family: 'SF Mono', monospace;
-  border-radius: 10px;
-  transition: background 0.3s ease, box-shadow 0.4s ease;
-  color: rgba(220, 220, 255, 0.95);
-}
-
-.square.light {
-  background: rgba(10, 25, 50, 0.4);
-  box-shadow: inset 0 0 8px rgba(40, 70, 110, 0.7);
-}
-
-.square.dark {
-  background: rgba(20, 35, 70, 0.7);
-  box-shadow: inset 0 0 9px rgba(20, 40, 75, 0.8);
-}
-
-.square.selected {
-  background: rgba(64, 156, 255, 0.8) !important;
-  box-shadow: 0 0 10px var(--blue-light) !important;
-  color: white !important;
-}
-
-.square.valid {
-  background: rgba(255, 215, 0, 0.7) !important;
-  box-shadow: 0 0 12px var(--gold-highlight) !important;
-  color: #201800 !important;
-}
-
-.square:hover {
-  filter: brightness(1.2);
-  box-shadow: 0 0 12px var(--blue-light);
-}
-
-.piece {
-  animation: pieceGlow 8s ease-in-out infinite alternate;
-  user-select: none;
-}
-
-@keyframes pieceGlow {
-  0% {text-shadow: 0 0 8px var(--blue-light);}
-  100% {text-shadow: 0 0 20px var(--gold-highlight);}
+.chess-square-button {
+    border-radius: 12px !important;
+    border: 3px solid rgba(64,156,255,0.3) !important;
+    font-family: 'SF Mono', 'Monaco', 'Menlo', monospace !important;
+    font-weight: 700 !important;
+    font-size: 2rem !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 4px 16px rgba(64,156,255,0.2),0 0 0 1px rgba(64,156,255,0.1),inset 0 1px 0 rgba(255,255,255,0.2) !important;
+    min-height: 70px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    overflow: hidden !important;
+    background: linear-gradient(135deg, rgba(64,156,255,0.1), rgba(100,200,255,0.15), rgba(64,156,255,0.1)) !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# Initialize session state
-def init():
-    if "board" not in st.session_state:
+def init_chess_game():
+    if 'board' not in st.session_state:
         st.session_state.board = chess.Board()
-    if "move_history" not in st.session_state:
+    if 'move_history' not in st.session_state:
         st.session_state.move_history = []
-    if "selected_square" not in st.session_state:
+    if 'selected_square' not in st.session_state:
         st.session_state.selected_square = None
-    if "valid_moves" not in st.session_state:
+    if 'valid_moves' not in st.session_state:
         st.session_state.valid_moves = []
-    if "game_mode" not in st.session_state:
+    if 'game_mode' not in st.session_state:
         st.session_state.game_mode = "single"
-    if "room_code" not in st.session_state:
-        st.session_state.room_code = None
-    if "waiting" not in st.session_state:
-        st.session_state.waiting = False
+    if 'difficulty_level' not in st.session_state:
+        st.session_state.difficulty_level = "intermediate"
+    if 'tutor_mode' not in st.session_state:
+        st.session_state.tutor_mode = True
+    if 'show_hints' not in st.session_state:
+        st.session_state.show_hints = True
+    if 'move_quality_threshold' not in st.session_state:
+        st.session_state.move_quality_threshold = 0.7
 
-# Returns Unicode symbols for chess pieces with classes for animations
-def piece_unicode(piece):
-    if not piece:
-        return ""
-    unicode_pieces = {
-        "P":"♙",
-        "N":"♘",
-        "B":"♗",
-        "R":"♖",
-        "Q":"♕",
-        "K":"♔",
-        "p":"♟",
-        "n":"♞",
-        "b":"♝",
-        "r":"♜",
-        "q":"♛",
-        "k":"♚"
-    }
-    return f'<span class="piece piece-{piece.symbol().lower()}">{unicode_pieces[piece.symbol()]}</span>'
-
-# Draw the board with clickable squares
-def draw_board():
-    board = st.session_state.board
-    selected = st.session_state.selected_square
-    valid_moves = st.session_state.valid_moves
-
-    letters = "abcdefgh"
-
-    # Build grid squares as buttons
-    cols = st.columns(8)
-
-    html = '<div class="chessboard">'
-    for rank in range(7, -1, -1):
-        for file in range(8):
-            sq = chess.square(file, rank)
-            piece = board.piece_at(sq)
-            color = 'light' if (rank + file) % 2 == 0 else 'dark'
-
-            classes = f"square {color}"
-            if sq == selected:
-                classes += " selected"
-            elif any(move.to_square == sq for move in valid_moves):
-                classes += " valid"
-
-            piece_html = piece_unicode(piece)
-
-            html += (f'<button class="{classes}" id="square-{sq}" title="{letters[file]}{rank+1}" '
-                     f'onclick="sendClick({sq})">{piece_html}</button>')
-    html += "</div>"
-
-    # Inject JS function for click handling to Streamlit input widget hack
-    js = """
-    <script>
-    const sendClick = (sq) => {
-        let inputEl = window.parent.document.querySelector('input[id="square-click"]');
-        if (!inputEl) {
-            inputEl = window.parent.document.createElement('input');
-            inputEl.type = 'hidden';
-            inputEl.id = 'square-click';
-            inputEl.name = 'square-click';
-            window.parent.document.body.appendChild(inputEl);
-        }
-        inputEl.value = sq;
-        inputEl.dispatchEvent(new Event('change'));
-    }
-    </script>
-    """
-
-    st.markdown(html + js, unsafe_allow_html=True)
-
-def update_state():
-    # Check if clicked square input exists
-    clicked = st.experimental_get_query_params().get("square-click")
-    if not clicked:
-        # Old-style form workaround
-        if "square-click" in st.session_state:
-            clicked = [str(st.session_state["square-click"])]
-    if clicked:
-        sq = int(clicked[0])
-        board = st.session_state.board
-        # Handle selection and moves
-        if st.session_state.selected_square is None:
-            # Select the piece only if it is player's turn piece color
-            piece = board.piece_at(sq)
-            if piece and piece.color == board.turn:
-                st.session_state.selected_square = sq
-                st.session_state.valid_moves = [m for m in board.legal_moves if m.from_square == sq]
-        else:
-            move = chess.Move(st.session_state.selected_square, sq)
-            # Auto promote pawn to queen
-            piece = board.piece_at(st.session_state.selected_square)
-            if piece is not None and piece.piece_type == chess.PAWN:
-                if (piece.color and sq >= 56) or (not piece.color and sq <= 7):
-                    move = chess.Move(st.session_state.selected_square, sq, promotion=chess.QUEEN)
-            if move in board.legal_moves:
-                board.push(move)
-                st.session_state.move_history.append(move.uci())
-                st.session_state.selected_square = None
-                st.session_state.valid_moves = []
-                # Save multiplayer state if needed
-                if st.session_state.game_mode == "multiplayer":
-                    save_game_state()
-            else:
-                # If clicked invalid square, select new square if allowed
-                piece = board.piece_at(sq)
-                if piece and piece.color == board.turn:
-                    st.session_state.selected_square = sq
-                    st.session_state.valid_moves = [m for m in board.legal_moves if m.from_square == sq]
-                else:
-                    st.session_state.selected_square = None
-                    st.session_state.valid_moves = []
-            # Clear the input
-            st.experimental_set_query_params(**{"square-click": None})
-
-def save_game_state():
+def make_move(move_uci):
     try:
-        state = {
-            "fen": st.session_state.board.fen(),
-            "move_history": st.session_state.move_history,
-            "last_updated": time.time()
-        }
-        filename = f"game_{st.session_state.room_code}.json"
-        with open(filename, "w") as f:
-            json.dump(state, f)
-        return True
-    except Exception as e:
-        print(f"Error saving state: {e}")
+        move = chess.Move.from_uci(move_uci)
+        if move in st.session_state.board.legal_moves:
+            st.session_state.board.push(move)
+            st.session_state.move_history.append(move_uci)
+            st.session_state.selected_square = None
+            st.session_state.valid_moves = []
+            return True
+        else:
+            st.error("💎 Invalid move! Try again!")
+            return False
+    except ValueError:
+        st.error("💎 Invalid move format! Use UCI notation (e.g., 'e2e4', 'g1f3')")
         return False
 
-def load_game_state():
-    try:
-        filename = f"game_{st.session_state.room_code}.json"
-        if os.path.exists(filename):
-            with open(filename, "r") as f:
-                state = json.load(f)
-            st.session_state.board.set_fen(state["fen"])
-            st.session_state.move_history = state["move_history"]
-            return True
-    except Exception as e:
-        print(f"Error loading state: {e}")
-    return False
+def select_square(square):
+    piece = st.session_state.board.piece_at(square)
+    if piece and piece.color == st.session_state.board.turn:
+        st.session_state.selected_square = square
+        st.session_state.valid_moves = [move for move in st.session_state.board.legal_moves if move.from_square == square]
+    else:
+        st.session_state.selected_square = None
+        st.session_state.valid_moves = []
+
+def handle_square_click(square):
+    if not (st.session_state.game_mode == "single" or is_player_turn()):
+        return
+    if st.session_state.selected_square is not None:
+        from_sq = st.session_state.selected_square
+        to_sq = square
+        move = chess.Move(from_sq, to_sq)
+        piece = st.session_state.board.piece_at(from_sq)
+        if piece and piece.piece_type == chess.PAWN:
+            if (piece.color and to_sq >= 56) or (not piece.color and to_sq <= 7):
+                move = chess.Move(from_sq, to_sq, promotion=chess.QUEEN)
+        if move in st.session_state.board.legal_moves:
+            if make_move(move.uci()):
+                st.experimental_rerun()
+        else:
+            select_square(square)
+    else:
+        select_square(square)
 
 def is_player_turn():
-    # Simple player color assignment: first player (who created room) = white, else black
     if st.session_state.game_mode == "single":
         return True
-    if not st.session_state.room_code:
-        return False
-    color = "white" if st.session_state.waiting else "black"
-    turn = "white" if st.session_state.board.turn else "black"
-    return color == turn
+    # Multiplayer turn logic can be added here
+    return True
+
+def display_board(board):
+    selected_square = st.session_state.get('selected_square', None)
+    valid_moves = st.session_state.get('valid_moves', [])
+    st.markdown('<div class="chess-board-container">', unsafe_allow_html=True)
+    for rank in range(7, -1, -1):
+        cols = st.columns(8)
+        for file in range(8):
+            square = chess.square(file, rank)
+            piece = board.piece_at(square)
+            piece_symbols = {
+                'k': '♔', 'q': '♕', 'r': '♖', 'b': '♗',
+                'n': '♘', 'p': '♙', 'K': '♚', 'Q': '♛',
+                'R': '♜', 'B': '♝', 'N': '♞', 'P': '♟'
+            }
+            piece_symbol = piece_symbols.get(piece.symbol(), '') if piece else ''
+            piece_class = ''
+            if piece:
+                pt = piece.symbol().lower()
+                if pt == 'k': piece_class = "piece-king"
+                elif pt == 'q': piece_class = "piece-queen"
+                elif pt == 'r': piece_class = "piece-rook"
+                elif pt == 'b': piece_class = "piece-bishop"
+                elif pt == 'n': piece_class = "piece-knight"
+                elif pt == 'p': piece_class = "piece-pawn"
+            bg_color = 'rgba(64, 156, 255, 0.8)' if square == selected_square else \
+                       'rgba(40, 167, 69, 0.8)' if any(move.to_square == square for move in valid_moves) else \
+                       'rgba(248, 249, 250, 0.9)' if (rank + file) % 2 == 0 else 'rgba(108, 117, 125, 0.9)'
+            text_color = 'white' if square==selected_square or any(move.to_square==square for move in valid_moves) or ((rank+file)%2!=0) else 'black'
+            with cols[file]:
+                button_html = f"""
+                <div style="position: relative;">
+                    <button class="chess-square-button {piece_class}" onclick="handleChessClick({square})"
+                        style="background: {bg_color}; color: {text_color}; width: 100%; height: 70px; border-radius: 12px;
+                               font-family: 'SF Mono', 'Monaco', 'Menlo', monospace; font-weight: 700; font-size: 2.5rem;
+                               cursor: pointer; display: flex; align-items: center; justify-content: center;
+                               position: relative; overflow: hidden;">
+                        {piece_symbol}
+                    </button>
+                </div>
+                """
+                st.markdown(button_html, unsafe_allow_html=True)
+    st.markdown("""
+    <script>
+    function handleChessClick(square) {
+        const prev = document.getElementById('chess-click-input');
+        if(prev) prev.remove();
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'chess_square_click';
+        input.value = square;
+        input.id = 'chess-click-input';
+        document.body.appendChild(input);
+        const event = new CustomEvent('chessSquareClick', { detail: { square: square } });
+        document.dispatchEvent(event);
+    }
+    </script>
+    """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def main():
-    init()
+    init_chess_game()
+
+    # Handle chess square click from HTML/JS if any
+    if 'chess_square_click' in st.experimental_get_query_params():
+        clicked_square = int(st.experimental_get_query_params()['chess_square_click'][0])
+        handle_square_click(clicked_square)
+        # Clear query param to prevent repeated clicks
+        st.experimental_set_query_params()
+
     st.markdown('<div class="glass-container">', unsafe_allow_html=True)
-    st.title("💎 Glass Chess Velvet Multiplayer")
-    st.markdown('<h2 class="subtitle">Crystal Clear Transparent Velvet with Blue Lighting</h2>', unsafe_allow_html=True)
+    st.markdown('<h1 class="glass-title">💎 GLASS CHESS 💎</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="glass-subtitle">Where elegance meets strategy in a crystal-clear interface</p>', unsafe_allow_html=True)
 
-    # Multiplayer controls & join/create room
-    if st.session_state.game_mode == "single":
-        if st.button("Create Multiplayer Room"):
-            code = ''.join(random.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k=6))
-            st.session_state.room_code = code
-            st.session_state.waiting = True
-            st.session_state.game_mode = "multiplayer"
-            st.experimental_rerun()
-        room_to_join = st.text_input("Or enter Multiplayer Room Code:")
-        if st.button("Join Room"):
-            if room_to_join.strip().upper() == st.session_state.room_code:
-                st.session_state.waiting = False
-                st.experimental_rerun()
-            else:
-                st.error("Invalid Room Code")
-    else:
-        st.info(f"Multiplayer Room: {st.session_state.room_code}")
-        if st.session_state.waiting:
-            st.info("Waiting for opponent to join. Share your room code.")
-            room_to_join = st.text_input("Enter Room Code to Join")
-            if st.button("Join Room"):
-                if room_to_join.strip().upper() == st.session_state.room_code:
-                    st.session_state.waiting = False
-                    st.experimental_rerun()
-                else:
-                    st.error("Invalid Room Code")
-        else:
-            my_color = "White" if st.session_state.waiting else "Black"
-            st.success(f"You are playing as {my_color}")
-            turn_status = "Your turn" if is_player_turn() else "Opponent's turn"
-            if is_player_turn():
-                st.info("Your turn - Make your move")
-            else:
-                st.warning("Waiting for opponent's move")
+    display_board(st.session_state.board)
 
-            # Refresh button for manual refresh (simulate live updates)
-            if st.button("Refresh Game State"):
-                load_game_state()
-                st.experimental_rerun()
-
-            # Load latest state regularly - you can add st.experimental_rerun() with timer if needed
-
-    draw_board()
-    update_state()
-
-    # Game controls
-    cols = st.columns(5)
-    if cols[0].button("New Game"):
-        st.session_state.board.reset()
-        st.session_state.move_history = []
-        st.session_state.selected_square = None
-        st.session_state.valid_moves = []
-
-        if st.session_state.game_mode == "multiplayer":
-            save_game_state()
-        st.experimental_rerun()
-
-    if cols[1].button("Undo Move") and len(st.session_state.board.move_stack) > 0:
-        st.session_state.board.pop()
-        if st.session_state.move_history:
-            st.session_state.move_history.pop()
-        st.session_state.selected_square = None
-        st.session_state.valid_moves = []
-        if st.session_state.game_mode == "multiplayer":
-            save_game_state()
-        st.experimental_rerun()
-
-    if cols[2].button("Flip Board"):
-        st.session_state.flip_board = not st.session_state.get("flip_board", False)
-        st.experimental_rerun()
-
-    if cols[3].button("Save Game"):
-        if st.session_state.game_mode == "multiplayer":
-            saved = save_game_state()
-            if saved:
-                st.success("Game saved successfully!")
-            else:
-                st.error("Failed to save game.")
-
-    # Show game info & move count
-    st.markdown(f"**Move count:** {len(st.session_state.move_history)}")
-    status, msg = get_game_status(st.session_state.board)
+    status, message = get_game_status(st.session_state.board)
     if status != "normal":
-        st.markdown(f"<div class='status-message status-{status}'>{msg}</div>", unsafe_allow_html=True)
+        st.markdown(f'<div class="status-message status-{status}">{message}</div>', unsafe_allow_html=True)
+
+    # Game controls simplified for demo
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("💎 NEW GAME"):
+            st.session_state.board = chess.Board()
+            st.session_state.move_history = []
+            st.session_state.selected_square = None
+            st.session_state.valid_moves = []
+            st.experimental_rerun()
+    with col2:
+        if st.button("↩️ UNDO"):
+            if len(st.session_state.board.move_stack) > 0:
+                st.session_state.board.pop()
+                if st.session_state.move_history:
+                    st.session_state.move_history.pop()
+                st.session_state.selected_square = None
+                st.session_state.valid_moves = []
+                st.experimental_rerun()
 
     st.markdown('</div>', unsafe_allow_html=True)
+
+def get_game_status(board):
+    if board.is_checkmate():
+        return "checkmate", "💎 CHECKMATE! The game is over! 💎"
+    elif board.is_stalemate():
+        return "stalemate", "⚖️ STALEMATE! The game is a draw! ⚖️"
+    elif board.is_insufficient_material():
+        return "stalemate", "⚖️ Insufficient material! Draw! ⚖️"
+    elif board.is_check():
+        return "check", "⚡ CHECK! Your king is in danger! ⚡"
+    else:
+        return "normal", "💎 Game in progress 💎"
 
 if __name__ == "__main__":
     main()
