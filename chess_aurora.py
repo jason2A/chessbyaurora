@@ -2,7 +2,6 @@ import streamlit as st
 import chess
 import streamlit.components.v1 as components
 
-# Initialize board in session state
 if "board" not in st.session_state:
     st.session_state.board = chess.Board()
 
@@ -12,13 +11,16 @@ html_code = f"""
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard.js/1.0.0/css/chessboard.min.css" />
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard.js/1.0.0/js/chessboard.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.min.js"></script>
   <style>
     body {{
       margin: 0;
-      height: 100vh;
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -57,7 +59,6 @@ html_code = f"""
 </head>
 <body>
   <div id="board"></div>
-
   <script>
     var game = new Chess('{fen}');
     var board = Chessboard('board', {{
@@ -72,7 +73,7 @@ html_code = f"""
       onSnapEnd: onSnapEnd
     }});
 
-    function onDragStart (source, piece, position, orientation) {{
+    function onDragStart (source, piece) {{
       if (game.game_over()) return false;
       if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
           (game.turn() === 'b' && piece.search(/^w/) !== -1)) {{
@@ -98,4 +99,4 @@ html_code = f"""
 </html>
 """
 
-components.html(html_code, height=650)
+components.html(html_code, height=720, scrolling=True)
